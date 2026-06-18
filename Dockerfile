@@ -19,6 +19,4 @@ EXPOSE 8880
 ENV HOST=0.0.0.0
 ENV PORT=8880
 
-VOLUME ["/app/data", "/app/database.db"]
-
 ENTRYPOINT ["/app/entrypoint.sh"]
