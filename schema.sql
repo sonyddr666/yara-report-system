@@ -1,0 +1,68 @@
+PRAGMA foreign_keys = ON;
+
+CREATE TABLE IF NOT EXISTS equipments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  equipment_type TEXT DEFAULT '',
+  location TEXT DEFAULT '',
+  area TEXT DEFAULT '',
+  ip TEXT DEFAULT '',
+  mac TEXT DEFAULT '',
+  firmware TEXT DEFAULT '',
+  code TEXT DEFAULT '',
+  serial TEXT DEFAULT '',
+  notes TEXT DEFAULT '',
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(name, location, ip, serial)
+);
+
+CREATE TABLE IF NOT EXISTS reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day_key TEXT NOT NULL UNIQUE,
+  title TEXT DEFAULT 'RELATORIO FOTOGRAFICO - MANUTENCAO PREVENTIVA DIARIA',
+  company TEXT DEFAULT 'YARA',
+  general_location TEXT DEFAULT 'RIG1',
+  status TEXT DEFAULT 'Aberto',
+  notes TEXT DEFAULT '',
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS images (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  day_key TEXT NOT NULL,
+  equipment_id INTEGER,
+  kind TEXT NOT NULL CHECK(kind IN ('before', 'after')),
+  original_name TEXT DEFAULT '',
+  file_path TEXT NOT NULL UNIQUE,
+  sha256 TEXT NOT NULL,
+  mime_type TEXT DEFAULT '',
+  size_bytes INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(equipment_id) REFERENCES equipments(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_images_sha256 ON images(sha256);
+CREATE INDEX IF NOT EXISTS idx_images_day_key ON images(day_key);
+
+CREATE TABLE IF NOT EXISTS report_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  report_id INTEGER NOT NULL,
+  equipment_id INTEGER NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  title TEXT DEFAULT '',
+  snapshot_json TEXT DEFAULT '{}',
+  service TEXT DEFAULT '',
+  status TEXT DEFAULT 'Operacional',
+  notes TEXT DEFAULT '',
+  before_image_id INTEGER,
+  after_image_id INTEGER,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(report_id) REFERENCES reports(id) ON DELETE CASCADE,
+  FOREIGN KEY(equipment_id) REFERENCES equipments(id),
+  FOREIGN KEY(before_image_id) REFERENCES images(id),
+  FOREIGN KEY(after_image_id) REFERENCES images(id)
+);
