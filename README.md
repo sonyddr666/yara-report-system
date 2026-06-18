@@ -2,7 +2,7 @@
 
 Sistema novo em Python + SQLite para relatórios fotográficos.
 
-Este projeto **não muda a interface nem o modelo de impressão**. O servidor novo entrega o `index.html` original da pasta acima e mantém as rotas antigas (`/api/report`, `/api/reports`) para a página continuar funcionando no mesmo padrão visual.
+Este projeto **não muda a interface nem o modelo de impressão**. O servidor novo entrega o `index.html` preservado no próprio projeto e mantém as rotas antigas (`/api/report`, `/api/reports`) para a página continuar funcionando no mesmo padrão visual.
 
 ## Rodar
 

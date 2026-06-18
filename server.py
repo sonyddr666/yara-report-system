@@ -13,7 +13,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 
 
 ROOT = Path(__file__).resolve().parent
-LEGACY_ROOT = ROOT.parent
+SITE_ROOT = ROOT
 DATA_DIR = ROOT / "data"
 IMAGE_DIR = DATA_DIR / "images"
 DB_PATH = ROOT / "database.db"
@@ -362,9 +362,90 @@ def count_images() -> int:
         return int(conn.execute("SELECT COUNT(*) AS c FROM images").fetchone()["c"])
 
 
+def load_devices() -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute("SELECT payload_json FROM device_base ORDER BY position, id").fetchall()
+    devices = []
+    for row in rows:
+        try:
+            devices.append(json.loads(row["payload_json"] or "{}"))
+        except json.JSONDecodeError:
+            continue
+    return devices
+
+
+def save_devices(devices: list[dict]) -> dict:
+    normalized = []
+    used_refs: dict[str, int] = {}
+
+    def norm(value) -> str:
+        return re.sub(r"\s+", " ", safe_text(value).lower())
+
+    def refs(device: dict) -> list[str]:
+        result = []
+        ip = norm(device.get("ip"))
+        mac = norm(device.get("mac"))
+        name = norm(device.get("name"))
+        if ip:
+            result.append(f"ip:{ip}")
+        if mac and mac != "sem_mac":
+            result.append(f"mac:{mac}")
+        if name:
+            result.append(f"name:{name}")
+        return result
+
+    def merge(old: dict, new: dict) -> dict:
+        merged = dict(old)
+        for key, value in new.items():
+            if key not in merged or (not safe_text(merged.get(key)) and safe_text(value)):
+                merged[key] = value
+        merged["number"] = old.get("number") or new.get("number")
+        return merged
+
+    for index, device in enumerate(devices, start=1):
+        if not isinstance(device, dict):
+            continue
+        ip = safe_text(device.get("ip"))
+        name = safe_text(device.get("name"))
+        if not ip and not name:
+            continue
+        copy = dict(device)
+        copy["number"] = copy.get("number") or index
+        device_refs = refs(copy)
+        existing_indexes = [used_refs[ref] for ref in device_refs if ref in used_refs]
+        if existing_indexes:
+            target = min(existing_indexes)
+            normalized[target] = merge(normalized[target], copy)
+            for ref in refs(normalized[target]):
+                used_refs[ref] = target
+            continue
+        normalized.append(copy)
+        target = len(normalized) - 1
+        for ref in device_refs:
+            used_refs[ref] = target
+
+    with connect() as conn:
+        conn.execute("DELETE FROM device_base")
+        for index, device in enumerate(normalized, start=1):
+            ip = safe_text(device.get("ip")) or f"sem-ip-{index}"
+            conn.execute(
+                """
+                INSERT INTO device_base (ip, position, payload_json)
+                VALUES (?, ?, ?)
+                ON CONFLICT(ip) DO UPDATE SET
+                  position = excluded.position,
+                  payload_json = excluded.payload_json,
+                  updated_at = CURRENT_TIMESTAMP
+                """,
+                (ip, index, json.dumps(device, ensure_ascii=False)),
+            )
+        conn.commit()
+    return {"ok": True, "count": len(normalized)}
+
+
 class SiteHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, directory=str(LEGACY_ROOT), **kwargs)
+        super().__init__(*args, directory=str(SITE_ROOT), **kwargs)
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -378,6 +459,8 @@ class SiteHandler(SimpleHTTPRequestHandler):
                 return json_response(self, 200, {"ok": True, "report": report})
             if path == "/api/reports":
                 return json_response(self, 200, {"ok": True, "reports": load_all_legacy_reports()})
+            if path == "/api/devices":
+                return json_response(self, 200, {"ok": True, "devices": load_devices()})
             if path.startswith("/images/"):
                 rel = path.removeprefix("/images/")
                 target = (IMAGE_DIR / rel).resolve()
@@ -394,12 +477,18 @@ class SiteHandler(SimpleHTTPRequestHandler):
         try:
             if path == "/api/report":
                 return json_response(self, 200, save_legacy_report(read_json_body(self)))
+            if path == "/api/devices":
+                payload = read_json_body(self)
+                devices = payload.get("devices") if isinstance(payload, dict) else None
+                if not isinstance(devices, list):
+                    return json_response(self, 400, {"ok": False, "error": "devices invalido"})
+                return json_response(self, 200, save_devices(devices))
             if path == "/api/import-json":
                 file_bytes = read_multipart_file(self)
                 if not file_bytes:
                     return json_response(self, 400, {"ok": False, "error": "arquivo ausente"})
                 report = json.loads(file_bytes.decode("utf-8"))
-                return json_response(self, 200, {"ok": True, **import_report_object(report, LEGACY_ROOT / "data")})
+                return json_response(self, 200, {"ok": True, **import_report_object(report, ROOT / "data")})
         except Exception as error:
             return json_response(self, 400, {"ok": False, "error": str(error)})
         return json_response(self, 404, {"ok": False, "error": "Rota nao encontrada"})

@@ -1,0 +1,5410 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Relatório Fotográfico Completo</title>
+
+<style>
+:root {
+  --verde: #006b5b;
+  --verde-escuro: #004a3f;
+  --verde-claro: #e6f3ef;
+  --verde-suave: #f3faf8;
+  --cinza-fundo: #e5e7eb;
+  --cinza-card: #ffffff;
+  --cinza-linha: #c9d1d6;
+  --cinza-texto: #1f2937;
+  --cinza-fraco: #6b7280;
+  --azul: #2563eb;
+  --vermelho: #dc2626;
+  --amarelo: #f59e0b;
+  --sombra: 0 10px 30px rgba(0,0,0,.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(0,107,91,.12), transparent 30%),
+    linear-gradient(135deg, #eef2f3, #d9dee3);
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--cinza-texto);
+}
+
+/* =======================
+   BARRA DE FERRAMENTAS
+======================= */
+
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: linear-gradient(90deg, #0f172a, #111827);
+  color: white;
+  padding: 12px 16px;
+  box-shadow: 0 4px 18px rgba(0,0,0,.28);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar button {
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 14px;
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+  background: var(--verde);
+  transition: transform .15s ease, opacity .15s ease;
+}
+
+.toolbar button:hover {
+  transform: translateY(-1px);
+  opacity: .92;
+}
+
+.toolbar button.saved {
+  background: #15803d;
+}
+
+.toolbar button.save-error {
+  background: var(--vermelho);
+}
+
+.toolbar button.secondary {
+  background: #374151;
+}
+
+.toolbar button.blue {
+  background: var(--azul);
+}
+
+.toolbar button.red {
+  background: var(--vermelho);
+}
+
+.toolbar button.yellow {
+  background: var(--amarelo);
+  color: #111827;
+}
+
+.toolbar small {
+  width: 100%;
+  text-align: center;
+  color: #d1d5db;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.print-options-panel {
+  width: min(210mm, calc(100% - 24px));
+  margin: 10px auto 0;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid rgba(0, 120, 100, .28);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 8px 22px rgba(7, 60, 55, .10);
+}
+
+.print-options-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--verde-escuro);
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.print-toggle-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: var(--verde);
+  color: white;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.print-toggle-all input,
+.print-option input {
+  accent-color: var(--verde);
+}
+
+.print-field-toggles {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  overflow-x: auto;
+  padding-bottom: 1px;
+  scrollbar-width: thin;
+}
+
+.print-option {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  border: 1px solid #cde7df;
+  border-radius: 999px;
+  background: #f7fbfa;
+  color: var(--verde-escuro);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.print-option:has(input:not(:checked)) {
+  background: #f3f4f6;
+  color: #64748b;
+  border-color: #d1d5db;
+}
+
+body.show .print-options-panel {
+  display: none !important;
+}
+
+.print-hidden {
+  display: none !important;
+}
+
+.equipment-body.print-layout-no-photos,
+.equipment-body.print-layout-no-info.print-layout-one-photo {
+  grid-template-columns: 1fr !important;
+}
+
+.equipment-body.print-layout-one-photo:not(.print-layout-no-info) {
+  grid-template-columns: 43% 57% !important;
+}
+
+.equipment-body.print-layout-no-info:not(.print-layout-one-photo):not(.print-layout-no-photos) {
+  grid-template-columns: 1fr 1fr !important;
+}
+
+/* =======================
+   PÁGINA
+======================= */
+
+.report-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 18px auto;
+  background: white;
+  box-shadow: var(--sombra);
+  border-radius: 2px;
+  overflow: visible;
+  position: relative;
+}
+
+.report-inner {
+  padding: 11mm 10mm;
+}
+
+/* =======================
+   CABEÇALHO PROFISSIONAL
+======================= */
+
+.report-top {
+  border: 1px solid var(--verde);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  margin-bottom: 8mm;
+}
+
+.report-title {
+  background: linear-gradient(90deg, var(--verde-escuro), var(--verde));
+  color: white;
+  padding: 9px 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.report-title h1 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+}
+
+.report-title .badge {
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.35);
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.report-meta {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  border-top: 1px solid rgba(255,255,255,.2);
+}
+
+.meta-box {
+  padding: 7px 9px;
+  border-right: 1px solid var(--cinza-linha);
+  min-height: 41px;
+}
+
+.meta-box:last-child {
+  border-right: 0;
+}
+
+.meta-label {
+  font-size: 8.5px;
+  color: var(--cinza-fraco);
+  text-transform: uppercase;
+  font-weight: 900;
+  letter-spacing: .25px;
+  margin-bottom: 3px;
+}
+
+.meta-value {
+  font-size: 11px;
+  font-weight: 900;
+  color: var(--cinza-texto);
+  min-height: 14px;
+}
+
+.report-summary {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  border-top: 1px solid var(--cinza-linha);
+  background: var(--verde-suave);
+}
+
+.summary-box {
+  padding: 7px 9px;
+  border-right: 1px solid var(--cinza-linha);
+}
+
+.summary-box:last-child {
+  border-right: 0;
+}
+
+.summary-box strong {
+  display: block;
+  font-size: 8.5px;
+  color: var(--verde-escuro);
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.summary-box span {
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+/* =======================
+   EQUIPAMENTOS
+======================= */
+
+.equipment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7mm;
+}
+
+.equipment-card {
+  border: 1px solid var(--cinza-linha);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.equipment-head {
+  background: linear-gradient(90deg, var(--verde), #02806d);
+  color: white;
+  padding: 6px 9px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.equipment-title {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .2px;
+}
+
+.equipment-status {
+  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.device-picker {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 6px;
+  padding: 7px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--cinza-linha);
+  align-items: center;
+}
+
+.device-picker label {
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.device-picker select,
+.device-picker input {
+  width: 100%;
+  font-size: 11px;
+  padding: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: white;
+}
+
+.device-picker button {
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 9px;
+  font-size: 10px;
+  font-weight: 900;
+  color: white;
+  background: #475569;
+  cursor: pointer;
+}
+
+.device-picker button.red {
+  background: var(--vermelho);
+}
+
+.device-details {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+  background: #d1d5db;
+}
+
+.device-detail {
+  min-width: 0;
+  padding: 6px 7px;
+  background: #f8fafc;
+}
+
+.device-detail strong,
+.device-detail span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.device-detail strong {
+  margin-bottom: 2px;
+  color: var(--cinza-fraco);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.device-detail span {
+  color: var(--cinza-texto);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.equipment-body {
+  display: grid;
+  grid-template-columns: 39% 30.5% 30.5%;
+  min-height: 72mm;
+}
+
+.info-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 9px;
+}
+
+.info-table th,
+.info-table td {
+  border-right: 1px solid var(--cinza-linha);
+  border-bottom: 1px solid var(--cinza-linha);
+  padding: 5px 6px;
+  vertical-align: top;
+  line-height: 1.2;
+}
+
+.info-table th {
+  width: 36%;
+  background: var(--verde-claro);
+  color: var(--verde-escuro);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: .15px;
+  font-weight: 900;
+  word-break: normal;
+  overflow-wrap: normal;
+  hyphens: none;
+}
+
+.info-table td {
+  width: 64%;
+  font-weight: 800;
+  background: white;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.info-table tr:last-child th,
+.info-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.photo-panel {
+  border-right: 1px solid var(--cinza-linha);
+  display: flex;
+  flex-direction: column;
+  min-height: 72mm;
+  background: #f8fafc;
+}
+
+.photo-panel:last-child {
+  border-right: 0;
+}
+
+.photo-header {
+  background: #0f766e;
+  color: white;
+  font-size: 10px;
+  font-weight: 900;
+  text-align: center;
+  padding: 5px;
+  text-transform: uppercase;
+}
+
+.photo-box {
+  flex: 1;
+  min-height: 60mm;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background:
+    linear-gradient(45deg, #f8fafc 25%, transparent 25%),
+    linear-gradient(-45deg, #f8fafc 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #f8fafc 75%),
+    linear-gradient(-45deg, transparent 75%, #f8fafc 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  overflow: hidden;
+}
+
+.photo-placeholder {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 900;
+  text-align: center;
+  padding: 10px;
+  text-transform: uppercase;
+}
+
+.photo-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: none;
+}
+
+.photo-box.has-image img {
+  display: block;
+}
+
+.photo-box.has-image .photo-placeholder {
+  display: none;
+}
+
+.photo-actions {
+  display: flex;
+  gap: 4px;
+  padding: 5px;
+  background: white;
+  border-top: 1px solid var(--cinza-linha);
+}
+
+.photo-actions input {
+  display: none;
+}
+
+.photo-actions button {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 0;
+  border-radius: 5px;
+  background: #475569;
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.15;
+  padding: 5px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.photo-actions button.photo-remove {
+  flex: 0 0 auto;
+  min-width: 58px;
+}
+
+/* =======================
+   RODAPÉ
+======================= */
+
+.report-footer {
+  margin-top: 7mm;
+  border-top: 1px solid var(--cinza-linha);
+  padding-top: 7px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  color: var(--cinza-fraco);
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.footer-left {
+  line-height: 1.4;
+}
+
+.footer-page {
+  color: var(--verde-escuro);
+  font-weight: 900;
+}
+
+/* =======================
+   EDIÇÃO
+======================= */
+
+[contenteditable="true"] {
+  outline: 1px dashed transparent;
+  border-radius: 3px;
+}
+
+body.edit [contenteditable="true"]:hover,
+body.edit [contenteditable="true"]:focus {
+  outline-color: var(--verde);
+  background: var(--verde-claro) !important;
+  color: var(--cinza-texto) !important;
+}
+
+.floating-edit {
+  display: none;
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 1000;
+  border: 0;
+  border-radius: 999px;
+  padding: 13px 17px;
+  background: var(--verde);
+  color: white;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 8px 20px rgba(0,0,0,.28);
+  cursor: pointer;
+}
+
+body.show .floating-edit {
+  display: block;
+}
+
+body.show {
+  background: white;
+}
+
+body.show .toolbar,
+body.show .no-show {
+  display: none !important;
+}
+
+body.show .report-page {
+  margin: 0 auto;
+  box-shadow: none;
+}
+
+#printOutput {
+  display: none;
+}
+
+body.show #reportPage {
+  display: none !important;
+}
+
+body.show #printOutput {
+  display: block;
+}
+
+body.show #printOutput .report-page {
+  margin: 0 auto;
+  box-shadow: none;
+}
+
+/* =======================
+   PRINT / PDF
+======================= */
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .toolbar,
+  .no-show,
+  .no-print,
+  .floating-edit {
+    display: none !important;
+  }
+
+  .report-page {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .report-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .report-inner {
+    padding: 10mm 9mm !important;
+  }
+
+  [contenteditable="true"] {
+    outline: none !important;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  body {
+    overflow-x: auto;
+  }
+
+  .toolbar {
+    justify-content: flex-start;
+  }
+
+  .report-page {
+    margin: 10px;
+  }
+}
+
+/* CORES DO RELATÓRIO */
+:root {
+  --verde: #007864;
+  --verde-escuro: #073c37;
+  --verde-claro: #dff3ed;
+  --verde-suave: #f4faf8;
+  --sombra: 0 18px 45px rgba(7, 60, 55, .16);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(0, 120, 100, .12), transparent 28%),
+    linear-gradient(145deg, #eef4f2 0%, #dfe9e6 100%);
+}
+
+.toolbar {
+  background: linear-gradient(110deg, #052f2c 0%, #07594f 100%);
+  border-bottom: 3px solid #007864;
+  box-shadow: 0 8px 24px rgba(7, 60, 55, .22);
+}
+
+.toolbar button {
+  border-radius: 20px;
+  padding: 8px 15px;
+}
+
+.report-page {
+  border-top: 7px solid var(--verde);
+  box-shadow: var(--sombra);
+  overflow: visible;
+}
+
+.report-top {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 120, 100, .28);
+  border-radius: 12px;
+  background: linear-gradient(145deg, #ffffff 0%, #f3faf8 100%);
+  box-shadow: 0 8px 22px rgba(7, 60, 55, .09);
+}
+
+.report-title {
+  background: linear-gradient(110deg, #073c37 0%, #007864 100%);
+  border-left: 7px solid #007864;
+}
+
+.report-title h1 {
+  letter-spacing: .7px;
+}
+
+.report-title .badge {
+  background: #dff3ed;
+  color: #07594f;
+  border-color: #a7d8ca;
+}
+
+.meta-box,
+.summary-box {
+  border-radius: 8px;
+  border-color: rgba(0, 120, 100, .23);
+  background: rgba(255, 255, 255, .88);
+}
+
+.equipment-card {
+  border-radius: 12px;
+  border-color: rgba(0, 120, 100, .32);
+  box-shadow: 0 8px 20px rgba(7, 60, 55, .08);
+}
+
+.equipment-head {
+  background: linear-gradient(110deg, #073c37 0%, #007864 100%);
+  border-left: 6px solid #007864;
+}
+
+.equipment-status {
+  background: #dff3ed;
+  color: #07594f;
+  border-color: #a7d8ca;
+}
+
+@media print {
+  body {
+    background: white !important;
+  }
+
+  .report-page {
+    border-top: 7px solid var(--verde) !important;
+  }
+}
+
+.day-control {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.22);
+  border-radius: 9px;
+  background: rgba(255,255,255,.08);
+}
+
+.day-control label {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.day-control input {
+  min-height: 32px;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 8px;
+  color: var(--cinza-texto);
+  font-weight: 800;
+  background: white;
+}
+
+.history-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  padding: 24px;
+  background: rgba(3, 35, 32, .72);
+  overflow: auto;
+}
+
+.history-panel.open {
+  display: block;
+}
+
+.data-panel {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3100;
+  padding: 24px;
+  background: rgba(3, 35, 32, .72);
+  overflow: auto;
+}
+
+.data-panel.open {
+  display: block;
+}
+
+.history-card {
+  width: min(820px, 100%);
+  margin: 0 auto;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0 24px 60px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+
+.data-card {
+  width: min(1180px, 100%);
+}
+
+.history-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  color: white;
+  background: linear-gradient(110deg, var(--verde-escuro), var(--verde));
+}
+
+.history-head h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.data-tools {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px repeat(4, auto);
+  gap: 8px;
+  padding: 12px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--cinza-linha);
+}
+
+.data-tools input,
+.data-tools select,
+.data-form input,
+.data-form select,
+.data-form textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  padding: 8px;
+  color: var(--cinza-texto);
+  font-size: 12px;
+  font-weight: 700;
+  background: white;
+}
+
+.data-tools button,
+.data-form button {
+  border: 0;
+  border-radius: 7px;
+  padding: 8px 10px;
+  color: white;
+  background: var(--verde);
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.data-tools button.secondary,
+.data-form button.secondary {
+  background: #475569;
+}
+
+.data-tools button.red,
+.data-form button.red {
+  background: var(--vermelho);
+}
+
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--cinza-linha);
+  background: var(--verde-suave);
+}
+
+.data-stat {
+  padding: 9px;
+  border: 1px solid #cde7df;
+  border-radius: 8px;
+  background: white;
+}
+
+.data-stat strong,
+.data-stat span {
+  display: block;
+}
+
+.data-stat strong {
+  margin-bottom: 3px;
+  color: var(--verde-escuro);
+  font-size: 17px;
+}
+
+.data-stat span {
+  color: var(--cinza-fraco);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.data-layout {
+  display: grid;
+  grid-template-columns: 1.4fr .9fr;
+  gap: 12px;
+  padding: 14px;
+}
+
+.data-table-wrap {
+  max-height: 58vh;
+  overflow: auto;
+  border: 1px solid var(--cinza-linha);
+  border-radius: 9px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: var(--verde-escuro);
+  background: #eef8f5;
+  font-size: 9px;
+  text-transform: uppercase;
+}
+
+.data-table tr:hover td {
+  background: #f8fafc;
+}
+
+.data-table button {
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 7px;
+  color: white;
+  background: var(--verde);
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.data-table button.secondary {
+  background: #475569;
+}
+
+.data-table button.red {
+  background: var(--vermelho);
+}
+
+.data-status {
+  display: inline-block;
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: white;
+  background: #16a34a;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.data-status.offline {
+  background: var(--vermelho);
+}
+
+.data-form {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+  padding: 12px;
+  border: 1px solid var(--cinza-linha);
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.data-form h3 {
+  margin: 0 0 4px;
+  color: var(--verde-escuro);
+  font-size: 14px;
+}
+
+.data-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.data-form label {
+  display: grid;
+  gap: 4px;
+  color: var(--cinza-fraco);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.data-form textarea {
+  min-height: 64px;
+  resize: vertical;
+}
+
+.data-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.history-list {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+}
+
+.history-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  border: 1px solid var(--cinza-linha);
+  border-radius: 9px;
+  background: var(--verde-suave);
+}
+
+.history-info strong,
+.history-info span {
+  display: block;
+}
+
+.history-info span {
+  margin-top: 3px;
+  color: var(--cinza-fraco);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.history-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.history-actions button,
+.history-head button,
+.monthly-actions button {
+  border: 0;
+  border-radius: 7px;
+  padding: 7px 10px;
+  color: white;
+  background: var(--verde);
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.history-actions button.red {
+  background: var(--vermelho);
+}
+
+.empty-history {
+  padding: 28px;
+  color: var(--cinza-fraco);
+  font-weight: 800;
+  text-align: center;
+}
+
+#monthlyOutput {
+  display: none;
+}
+
+.monthly-actions {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 2000;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--verde-escuro);
+  box-shadow: 0 4px 18px rgba(0,0,0,.22);
+}
+
+body.monthly .toolbar,
+body.monthly #reportPage,
+body.monthly .floating-edit,
+body.monthly .data-panel,
+body.monthly .no-show {
+  display: none !important;
+}
+
+body.monthly #monthlyOutput {
+  display: block;
+}
+
+body.monthly .monthly-actions {
+  display: flex;
+}
+
+.monthly-cover .report-inner {
+  min-height: 270mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.monthly-cover-box {
+  border: 2px solid var(--verde);
+  border-radius: 14px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.monthly-cover-title {
+  padding: 26px;
+  color: white;
+  background: linear-gradient(110deg, var(--verde-escuro), var(--verde));
+}
+
+.monthly-cover-title h1 {
+  margin: 0 0 7px;
+  font-size: 24px;
+}
+
+.monthly-cover-title strong {
+  font-size: 15px;
+}
+
+.monthly-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--cinza-linha);
+}
+
+.monthly-stat {
+  padding: 24px 10px;
+  background: white;
+}
+
+.monthly-stat strong,
+.monthly-stat span {
+  display: block;
+}
+
+.monthly-stat strong {
+  margin-bottom: 6px;
+  color: var(--verde-escuro);
+  font-size: 24px;
+}
+
+.monthly-stat span {
+  color: var(--cinza-fraco);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+body.monthly [contenteditable="true"] {
+  outline: none !important;
+}
+
+@media print {
+  .history-panel,
+  .data-panel,
+  .monthly-actions {
+    display: none !important;
+  }
+
+  body:not(.monthly) #monthlyOutput {
+    display: none !important;
+  }
+
+  body.monthly #monthlyOutput {
+    display: block !important;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  .day-control {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .history-row {
+    grid-template-columns: 1fr;
+  }
+
+  .history-actions {
+    justify-content: flex-start;
+  }
+}
+
+
+/* =======================
+   MOBILE / USABILIDADE SEM ALTERAR DESKTOP
+======================= */
+.device-search {
+  width: 100%;
+  font-size: 11px;
+  padding: 7px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: white;
+  font-weight: 700;
+}
+
+.device-picker.has-search {
+  grid-template-columns: auto 1fr auto auto;
+}
+
+.device-picker.has-search .device-search {
+  grid-column: 2 / 5;
+}
+
+@media screen and (max-width: 900px) {
+  body {
+    overflow-x: hidden;
+    background: #eef4f2;
+  }
+
+  .toolbar {
+    position: sticky;
+    top: 0;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 7px;
+    padding: 10px;
+    max-height: 45vh;
+    overflow-y: auto;
+  }
+
+  .toolbar button,
+  .day-control,
+  .day-control input {
+    min-height: 38px;
+  }
+
+  .toolbar button {
+    flex: 1 1 calc(50% - 8px);
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+
+  .day-control {
+    width: 100%;
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+
+  .day-control button {
+    grid-column: span 1;
+  }
+
+
+  .report-page {
+    width: calc(100vw - 14px);
+    min-height: auto;
+    margin: 7px auto 16px;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .report-inner {
+    padding: 8px;
+  }
+
+  .report-title,
+  .equipment-head,
+  .report-footer {
+    grid-template-columns: 1fr;
+  }
+
+  .report-title h1 {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .report-title .badge,
+  .equipment-status {
+    justify-self: start;
+  }
+
+  .report-meta,
+  .report-summary,
+  .equipment-body {
+    grid-template-columns: 1fr;
+  }
+
+  .meta-box,
+  .summary-box {
+    border-right: 0;
+    border-bottom: 1px solid var(--cinza-linha);
+  }
+
+  .device-picker,
+  .device-picker.has-search {
+    grid-template-columns: 1fr;
+  }
+
+  .device-picker label,
+  .device-picker select,
+  .device-picker input,
+  .device-picker button,
+  .device-picker.has-search .device-search {
+    grid-column: auto;
+    width: 100%;
+  }
+
+  .equipment-body,
+  .photo-panel,
+  .photo-box {
+    min-height: 0;
+  }
+
+  .photo-box {
+    height: 220px;
+  }
+
+  .photo-actions {
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .info-table th,
+  .info-table td {
+    font-size: 9.5px;
+    padding: 7px 6px;
+  }
+}
+
+
+/* Fluxo automático mobile: sem texto extra na página */
+@media screen and (max-width: 900px) {
+  .device-picker.has-search {
+    grid-template-columns: 1fr;
+  }
+
+  .device-picker.has-search label,
+  .device-picker.has-search select,
+  .device-picker.has-search button,
+  .device-picker.has-search .device-search {
+    grid-column: 1 / -1;
+  }
+
+  .device-picker.has-search button {
+    min-height: 36px;
+  }
+
+  .device-details,
+  .data-stats,
+  .data-layout,
+  .data-form-row,
+  .data-tools {
+    grid-template-columns: 1fr;
+  }
+
+  .data-panel {
+    padding: 8px;
+  }
+
+  .data-card {
+    border-radius: 10px;
+  }
+
+  .mobile-focus-ring {
+    outline: 3px solid rgba(0, 120, 100, .45) !important;
+    outline-offset: 3px;
+  }
+}
+
+/* Visual em janelas estreitas: mantém o relatório em A4 e compacta a barra */
+@media screen and (max-width: 900px) {
+  body {
+    overflow-x: auto;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(0, 120, 100, .12), transparent 28%),
+      linear-gradient(145deg, #eef4f2 0%, #dfe9e6 100%);
+  }
+
+  .toolbar {
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    max-height: none;
+    min-height: 42px;
+    padding: 6px 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+  }
+
+  .toolbar button {
+    flex: 0 0 auto;
+    min-height: 30px;
+    padding: 6px 10px;
+    font-size: 11px;
+    border-radius: 16px;
+    white-space: nowrap;
+  }
+
+  .day-control {
+    flex: 0 0 auto;
+    width: auto;
+    display: flex;
+    grid-template-columns: none;
+    justify-content: flex-start;
+    align-items: center;
+    min-height: 30px;
+    padding: 3px 5px;
+  }
+
+  .day-control label {
+    font-size: 9px;
+  }
+
+  .day-control input {
+    width: 132px;
+    min-height: 30px;
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .day-control button {
+    grid-column: auto;
+  }
+
+  .report-page {
+    width: 210mm;
+    min-width: 210mm;
+    min-height: 297mm;
+    margin: 12px auto 18px;
+    border-radius: 2px;
+    overflow: visible;
+  }
+
+  .report-inner {
+    padding: 11mm 10mm;
+  }
+
+  .report-title,
+  .equipment-head,
+  .report-footer {
+    grid-template-columns: 1fr auto;
+  }
+
+  .report-title h1 {
+    font-size: 15px;
+    line-height: 1.2;
+  }
+
+  .report-title .badge,
+  .equipment-status {
+    justify-self: end;
+  }
+
+  .report-meta {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .report-summary {
+    grid-template-columns: 1.3fr 1fr 1fr;
+  }
+
+  .equipment-body {
+    grid-template-columns: 39% 30.5% 30.5%;
+    min-height: 72mm;
+  }
+
+  .meta-box,
+  .summary-box {
+    border-right: 1px solid var(--cinza-linha);
+    border-bottom: 0;
+  }
+
+  .meta-box:last-child,
+  .summary-box:last-child {
+    border-right: 0;
+  }
+
+  .device-picker,
+  .device-picker.has-search {
+    grid-template-columns: auto minmax(220px, 1fr) auto auto;
+  }
+
+  .device-picker label,
+  .device-picker select,
+  .device-picker input,
+  .device-picker button {
+    grid-column: auto;
+    width: auto;
+  }
+
+  .device-picker select,
+  .device-picker input {
+    width: 100%;
+  }
+
+  .device-picker.has-search .device-search {
+    grid-column: 2 / 5;
+    width: 100%;
+  }
+
+  .device-details {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .photo-panel {
+    min-height: 72mm;
+  }
+
+  .photo-box {
+    height: auto;
+    min-height: 60mm;
+  }
+
+  .photo-actions {
+    display: flex;
+    grid-template-columns: none;
+  }
+
+  .info-table th,
+  .info-table td {
+    font-size: 9px;
+    padding: 5px 6px;
+  }
+}
+
+/* Celular real: sem folha A4 travada e sem corte lateral */
+@media screen and (max-width: 640px) {
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: #eef4f2;
+  }
+
+  .toolbar {
+    width: 100%;
+    max-width: 100vw;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 5px;
+    min-height: 0;
+    padding: 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-bottom-width: 3px;
+    box-shadow: 0 5px 14px rgba(7, 60, 55, .24);
+    scrollbar-width: thin;
+  }
+
+  .toolbar button {
+    flex: 0 0 auto;
+    min-height: 28px;
+    padding: 6px 8px;
+    font-size: 10px;
+    line-height: 1;
+    border-radius: 14px;
+  }
+
+  .toolbar small {
+    display: none;
+  }
+
+  .print-options-panel {
+    width: 100%;
+    max-width: 100vw;
+    margin: 0;
+    padding: 6px;
+    gap: 6px;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+    box-shadow: 0 4px 12px rgba(7, 60, 55, .12);
+  }
+
+  .print-options-head {
+    gap: 5px;
+    font-size: 9px;
+  }
+
+  .print-options-head strong {
+    display: none;
+  }
+
+  .print-toggle-all {
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+
+  .print-field-toggles {
+    gap: 4px;
+  }
+
+  .print-option {
+    padding: 5px 6px;
+    font-size: 9px;
+  }
+
+  .day-control {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 28px;
+    padding: 3px 5px;
+    gap: 4px;
+  }
+
+  .day-control label {
+    font-size: 8px;
+  }
+
+  .day-control input {
+    width: 116px;
+    min-height: 28px;
+    padding: 4px 5px;
+    font-size: 10px;
+  }
+
+  .report-page {
+    width: 100%;
+    min-width: 0;
+    min-height: auto;
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    overflow: hidden;
+  }
+
+  .report-inner {
+    padding: 6px;
+  }
+
+  .report-top {
+    margin-bottom: 8px;
+    border-radius: 0;
+  }
+
+  .report-title,
+  .equipment-head,
+  .report-footer {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .report-title {
+    padding: 10px;
+    border-left: 0;
+  }
+
+  .report-title h1 {
+    font-size: 12px;
+    line-height: 1.25;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .report-title .badge,
+  .equipment-status {
+    justify-self: start;
+  }
+
+  .report-meta {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .meta-box,
+  .summary-box {
+    min-width: 0;
+    border-right: 1px solid var(--cinza-linha);
+    border-bottom: 1px solid var(--cinza-linha);
+  }
+
+  .meta-box:nth-child(2n),
+  .summary-box {
+    border-right: 0;
+  }
+
+  .meta-box:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .equipment-list {
+    gap: 10px;
+  }
+
+  .equipment-card {
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .equipment-head {
+    padding: 8px 10px;
+    border-left: 0;
+  }
+
+  .equipment-title {
+    overflow-wrap: anywhere;
+  }
+
+  .device-picker,
+  .device-picker.has-search {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 7px;
+  }
+
+  .device-picker label,
+  .device-picker select,
+  .device-picker input,
+  .device-picker button,
+  .device-picker.has-search .device-search {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .device-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .equipment-body {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .info-table {
+    font-size: 9px;
+  }
+
+  .info-table th,
+  .info-table td {
+    padding: 6px;
+  }
+
+  .info-table th {
+    width: 34%;
+  }
+
+  .info-table td {
+    width: 66%;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+  }
+
+  .photo-panel {
+    min-height: 232px;
+    border-right: 0;
+    border-top: 1px solid var(--cinza-linha);
+  }
+
+  .photo-box {
+    height: 198px;
+    min-height: 198px;
+  }
+
+  .photo-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .photo-actions button {
+    min-height: 30px;
+  }
+}
+
+/* =======================
+   AJUSTE DE IMPRESSÃO: 2 EQUIPAMENTOS POR PÁGINA
+   Mantém as cores/layout e só controla altura, imagem e quebra.
+======================= */
+@media print {
+  .equipment-list {
+    gap: 5mm !important;
+  }
+
+  .equipment-card {
+    height: 86mm !important;
+    min-height: 86mm !important;
+    max-height: 86mm !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .equipment-body {
+    height: 78mm !important;
+    min-height: 78mm !important;
+    max-height: 78mm !important;
+    overflow: hidden !important;
+  }
+
+  .info-table {
+    height: 78mm !important;
+  }
+
+  .info-table th,
+  .info-table td {
+    padding: 3px 5px !important;
+    line-height: 1.08 !important;
+    overflow: hidden !important;
+  }
+
+  .photo-panel {
+    height: 78mm !important;
+    min-height: 78mm !important;
+    max-height: 78mm !important;
+    overflow: hidden !important;
+  }
+
+  .photo-header {
+    flex: 0 0 auto !important;
+  }
+
+  .photo-box {
+    height: calc(78mm - 20px) !important;
+    min-height: 0 !important;
+    max-height: calc(78mm - 20px) !important;
+    overflow: hidden !important;
+  }
+
+  .photo-box img {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    max-height: 100% !important;
+    object-fit: contain !important;
+  }
+
+  .equipment-card:nth-child(2n) {
+    break-after: page !important;
+    page-break-after: always !important;
+  }
+
+  .equipment-card:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+}
+
+
+
+@media print {
+  body.show #reportPage {
+    display: none !important;
+  }
+
+  body.show #printOutput {
+    display: block !important;
+  }
+
+  body.show #printOutput .equipment-card,
+  body.show #printOutput .equipment-card:nth-child(2n),
+  body.show #printOutput .equipment-card:last-child,
+  body.monthly #monthlyOutput .equipment-card,
+  body.monthly #monthlyOutput .equipment-card:nth-child(2n),
+  body.monthly #monthlyOutput .equipment-card:last-child {
+    break-after: auto !important;
+    page-break-after: auto !important;
+  }
+}
+
+</style>
+</head>
+
+<body class="edit">
+
+<div class="toolbar no-show">
+  <div class="day-control">
+    <label for="daySelector">Dia</label>
+    <input type="date" id="daySelector">
+    <button onclick="openSelectedDay()">Abrir dia</button>
+    <button onclick="createNewDay()">Novo dia</button>
+  </div>
+  <button onclick="setMode('edit')">Editar</button>
+  <button class="secondary" onclick="showCleanReport()">Mostrar limpo</button>
+  <button class="blue" onclick="addEquipment()">+ Novo equipamento</button>
+  <button class="secondary" onclick="duplicateLast()">Duplicar equipamento</button>
+  <button class="secondary" id="sameDayDuplicatesButton" onclick="toggleSameDayDuplicates()">Repetidos: Desativado</button>
+  <button class="secondary" id="saveButton" onclick="saveReport(true)">Salvar</button>
+  <button class="secondary" onclick="generatePDF()">Imprimir dia</button>
+  <button onclick="showHistory()">Dias anteriores</button>
+  <button onclick="showSavedData()">Dados salvos</button>
+  <button onclick="showMonthlyReport()">Ver mês completo</button>
+  <button class="secondary" onclick="exportBackup()">Exportar backup</button>
+  <button class="secondary" onclick="document.getElementById('backupInput').click()">Importar backup</button>
+  <input type="file" id="backupInput" accept=".json,application/json" hidden onchange="importBackup(this)">
+  <input type="file" id="deviceImportInput" accept=".json,application/json" hidden onchange="importDevices(this)">
+  <button class="red" onclick="deleteCurrentDay()">Excluir dia</button>
+</div>
+
+<button class="floating-edit" onclick="setMode('edit')">Editar</button>
+
+<div class="monthly-actions no-print">
+  <button onclick="closeMonthlyReport()">Voltar aos dias</button>
+  <button onclick="window.print()">Imprimir mês completo</button>
+</div>
+
+<section class="print-options-panel no-print" id="printOptionsPanel">
+  <div class="print-options-head">
+    <strong>Impressão</strong>
+    <label class="print-toggle-all" title="Mostrar ou ocultar todos os campos dos equipamentos na impressão">
+      <input type="checkbox" id="printToggleAll" checked onchange="setAllPrintFields(this.checked)">
+      <span>Todos</span>
+    </label>
+  </div>
+  <div class="print-field-toggles" id="printFieldToggles"></div>
+</section>
+
+<div class="history-panel no-print" id="historyPanel">
+  <div class="history-card">
+    <div class="history-head">
+      <h2>Dias salvos</h2>
+      <button onclick="closeHistory()">Fechar</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<div class="data-panel no-print" id="savedDataPanel">
+  <div class="history-card data-card">
+    <div class="history-head">
+      <h2>Dados salvos</h2>
+      <button onclick="closeSavedData()">Fechar</button>
+    </div>
+
+    <div class="data-tools">
+      <input id="deviceSearchInput" type="search" placeholder="Buscar por nome, IP, MAC, área, modelo ou código..." oninput="renderSavedData()">
+      <select id="deviceStatusFilter" onchange="renderSavedData()">
+        <option value="">Todos</option>
+        <option value="Online">Online</option>
+        <option value="Offline">Offline</option>
+        <option value="SEM_MAC">Sem MAC</option>
+        <option value="Vinculado">Vinculado</option>
+        <option value="Sem vínculo modelo/código">Sem vinculo</option>
+      </select>
+      <button onclick="startNewDevice()">Adicionar</button>
+      <button class="secondary" onclick="exportDevices()">Exportar dados</button>
+      <button class="secondary" onclick="document.getElementById('deviceImportInput').click()">Importar dados</button>
+      <button class="red" onclick="resetDeviceData()">Restaurar planilha</button>
+    </div>
+
+    <div class="data-stats" id="deviceStats"></div>
+
+    <div class="data-layout">
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Área</th>
+              <th>Nome/IP</th>
+              <th>MAC</th>
+              <th>Modelo</th>
+              <th>Código/SN</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="savedDataList"></tbody>
+        </table>
+      </div>
+
+      <form class="data-form" id="deviceForm" onsubmit="saveDeviceForm(event)">
+        <h3>Cadastro</h3>
+        <input type="hidden" id="deviceOriginalIp">
+        <div class="data-form-row">
+          <label>Status
+            <select id="deviceStatusRede">
+              <option value="Online">Online</option>
+              <option value="Offline">Offline</option>
+            </select>
+          </label>
+          <label>Área
+            <input id="deviceArea" type="text">
+          </label>
+        </div>
+        <label>Nome na lista IP
+          <input id="deviceName" type="text" required>
+        </label>
+        <label>Local oficial
+          <input id="deviceLocalOficial" type="text">
+        </label>
+        <div class="data-form-row">
+          <label>IP
+            <input id="deviceIp" type="text" required>
+          </label>
+          <label>MAC
+            <input id="deviceMac" type="text">
+          </label>
+        </div>
+        <div class="data-form-row">
+          <label>Tipo
+            <input id="deviceTipo" type="text">
+          </label>
+          <label>Modelo
+            <input id="deviceModelo" type="text">
+          </label>
+        </div>
+        <div class="data-form-row">
+          <label>Firmware
+            <input id="deviceFw" type="text">
+          </label>
+          <label>Código
+            <input id="deviceCodigo" type="text">
+          </label>
+        </div>
+        <div class="data-form-row">
+          <label>S/N
+            <input id="deviceSerial" type="text">
+          </label>
+          <label>Vinculo
+            <input id="deviceStatusVinculo" type="text">
+          </label>
+        </div>
+          <label>Observação
+          <textarea id="deviceObservacao"></textarea>
+        </label>
+        <div class="data-form-actions">
+          <button type="submit">Salvar cadastro</button>
+          <button type="button" class="secondary" onclick="clearDeviceForm()">Limpar</button>
+          <button type="button" class="red" onclick="deleteDeviceFromForm()">Excluir</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<main class="report-page" id="reportPage">
+  <div class="report-inner">
+
+    <section class="report-top">
+      <div class="report-title">
+        <h1 contenteditable="true">RELATÓRIO FOTOGRÁFICO — MANUTENÇÃO PREVENTIVA DIÁRIA</h1>
+        <div class="badge" contenteditable="true">DIÁRIO</div>
+      </div>
+
+      <div class="report-meta">
+        <div class="meta-box">
+          <div class="meta-label">Empresa</div>
+          <div class="meta-value" contenteditable="true" id="empresa">YARA</div>
+        </div>
+
+        <div class="meta-box">
+          <div class="meta-label">Local geral</div>
+          <div class="meta-value" contenteditable="true" id="localGeral">RIG1</div>
+        </div>
+
+        <div class="meta-box">
+          <div class="meta-label">Tipo de serviço</div>
+          <div class="meta-value" contenteditable="true">Manutenção preventiva diária</div>
+        </div>
+
+        <div class="meta-box">
+          <div class="meta-label">Relatório</div>
+          <div class="meta-value" contenteditable="true">Fotográfico técnico</div>
+        </div>
+
+        <div class="meta-box">
+          <div class="meta-label">Data</div>
+          <div class="meta-value" contenteditable="true" id="dataRelatorio">05/06/2026</div>
+        </div>
+      </div>
+
+      <div class="report-summary">
+        <div class="summary-box">
+          <strong>Descrição geral</strong>
+          <span contenteditable="true">Registro fotográfico diário das atividades de manutenção preventiva realizadas nos equipamentos listados.</span>
+        </div>
+
+        <div class="summary-box">
+          <strong>Total de equipamentos</strong>
+          <span id="totalEquipamentos">1</span>
+        </div>
+
+        <div class="summary-box">
+          <strong>Status geral</strong>
+          <span contenteditable="true">Concluído</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="equipment-list" id="equipmentList"></section>
+
+    <footer class="report-footer">
+      <div class="footer-left" contenteditable="true"></div>
+      <div class="footer-page">Página 1</div>
+    </footer>
+
+  </div>
+</main>
+
+<div id="printOutput"></div>
+
+<div id="monthlyOutput"></div>
+
+<script>
+const DEFAULT_DEVICE_DATA = [
+  {
+    "number": 1,
+    "statusRede": "Online",
+    "area": "SP1",
+    "ip": "10.193.239.5",
+    "mac": "00012A00A2BC",
+    "name": "SP1 VEIC TOTEM SAIDA",
+    "localOficial": "SP1 totem saída",
+    "tipo": "Totem",
+    "modelo": "Totem",
+    "fw": "11.38.08",
+    "codigo": "71.250.018.1CXX",
+    "serial": "122",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 2,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.7",
+    "mac": "00012A0277A8",
+    "name": "SALA MOTORES",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 3,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.10",
+    "mac": "00012A026B7A",
+    "name": "SP2-SALA REVISTA",
+    "localOficial": "Sala revista SP2",
+    "tipo": "Controle de acesso",
+    "modelo": "Controle de acesso",
+    "fw": "11.25.07",
+    "codigo": "70.250.071.1CXX",
+    "serial": "1360",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 4,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.14",
+    "mac": "00012A0267E2",
+    "name": "SALA CONTROL INSPE",
+    "localOficial": "Engenharia de inspeção / Área técnica",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.37.08",
+    "codigo": "71.250.260.6CXX",
+    "serial": "414",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 5,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.16",
+    "mac": "00012A00A228",
+    "name": "SP2 TORNIQ SIMPLES",
+    "localOficial": "SP2 torniquete Esq único",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "04.B0.32",
+    "codigo": "80.250.071.1CXP",
+    "serial": "121",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 6,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.17",
+    "mac": "00012A0112BC",
+    "name": "SP2 TORNIQ DUPL DIR",
+    "localOficial": "SP2 torniquete Dir duplo",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "04.B0.32",
+    "codigo": "80.250.071.1CXP",
+    "serial": "4982",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 7,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.18",
+    "mac": "00012A044EBA",
+    "name": "SP2 TORNIQ DUPL ESQ",
+    "localOficial": "SP2 torniquete Esq duplo meio",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "04.B0.32",
+    "codigo": "80.250.071.1CXP",
+    "serial": "120",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 8,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.19",
+    "mac": "00012A004FCA",
+    "name": "SP2 VEIC TOTEM ENT",
+    "localOficial": "SP2 totem entrada",
+    "tipo": "Totem",
+    "modelo": "Totem",
+    "fw": "04.82.21",
+    "codigo": "71.250.019.1CXX",
+    "serial": "101",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 9,
+    "statusRede": "Online",
+    "area": "SP2",
+    "ip": "10.193.239.20",
+    "mac": "00012A00E938",
+    "name": "SP2 VEIC TOTEM SAI",
+    "localOficial": "SP2 totem saída",
+    "tipo": "Totem",
+    "modelo": "Totem",
+    "fw": "04.99.26",
+    "codigo": "71.250.019.1CBX",
+    "serial": "101",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 10,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.21",
+    "mac": "00012A00B854",
+    "name": "SP3 CATRACA ENT ESQ",
+    "localOficial": "SP3 CATRACA ENT ESQUERDA",
+    "tipo": "Catraca",
+    "modelo": "Catraca",
+    "fw": "04.99.26",
+    "codigo": "81.250.274.1CXX",
+    "serial": "117",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 11,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.22",
+    "mac": "00012A00B832",
+    "name": "SP3 CATRACA MEIO",
+    "localOficial": "SP3 CATRACA ENT MEIO",
+    "tipo": "Catraca",
+    "modelo": "Catraca",
+    "fw": "04.B0.32",
+    "codigo": "81.250.274.1CXX",
+    "serial": "116",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 12,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.23",
+    "mac": "00012A011B3E",
+    "name": "SP3-VEIC.TOTEM SAI",
+    "localOficial": "",
+    "tipo": "Totem",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 13,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.24",
+    "mac": "00012A0116CE",
+    "name": "SP3 VEIC TOTEM ENT",
+    "localOficial": "",
+    "tipo": "Totem",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 14,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.26",
+    "mac": "00012A00B84D",
+    "name": "SP3 REFEITORIO ESQ",
+    "localOficial": "SP3 CATRACA REFEITÓRIO ESQUERDA",
+    "tipo": "Catraca",
+    "modelo": "Catraca",
+    "fw": "04.99.26",
+    "codigo": "81.250.274.1CXX",
+    "serial": "106",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 15,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.27",
+    "mac": "00012A02886A",
+    "name": "SP3 - CATR ENT DIR",
+    "localOficial": "SP3 CATRACA ENT DIREITA",
+    "tipo": "Catraca",
+    "modelo": "Catraca",
+    "fw": "04.99.26",
+    "codigo": "81.250.274.1CXX",
+    "serial": "102",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 16,
+    "statusRede": "Online",
+    "area": "RIG1",
+    "ip": "10.193.239.28",
+    "mac": "00012A01094C",
+    "name": "Data Center RIG1",
+    "localOficial": "Sala data center SP1",
+    "tipo": "",
+    "modelo": "MD400",
+    "fw": "04.A3.26",
+    "codigo": "71.250.259.1CXX",
+    "serial": "557",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 17,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.29",
+    "mac": "00012A00A393",
+    "name": "LABORATORIO",
+    "localOficial": "",
+    "tipo": "",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 18,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.30",
+    "mac": "00012A026BC8",
+    "name": "SALA TI",
+    "localOficial": "SALA TI",
+    "tipo": "Controle de acesso",
+    "modelo": "Controle de acesso",
+    "fw": "04.82.21",
+    "codigo": "70.250.071.1CXX",
+    "serial": "1368",
+    "statusVinculo": "Vinculado",
+    "observacao": ""
+  },
+  {
+    "number": 19,
+    "statusRede": "Online",
+    "area": "ADM",
+    "ip": "10.193.239.31",
+    "mac": "00012A00F88A",
+    "name": "ENT ADM",
+    "localOficial": "",
+    "tipo": "",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 20,
+    "statusRede": "Online",
+    "area": "SP1",
+    "ip": "10.193.239.32",
+    "mac": "00012A01169B",
+    "name": "CLAVICULARIO SP1",
+    "localOficial": "Claviculário SP1",
+    "tipo": "Controle de acesso",
+    "modelo": "Controle de acesso",
+    "fw": "04.B0.32",
+    "codigo": "70.250.071.1CXX",
+    "serial": "1370",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 21,
+    "statusRede": "Online",
+    "area": "SP4",
+    "ip": "10.193.239.33",
+    "mac": "00012A024C31",
+    "name": "SP4-TORNIQ.TRIPUL.",
+    "localOficial": "Torniquete SP4 pier",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "11.28.08",
+    "codigo": "74.400.183.0TS",
+    "serial": "3867",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 22,
+    "statusRede": "Online",
+    "area": "SP4",
+    "ip": "10.193.239.34",
+    "mac": "00012A007A6E",
+    "name": "SP4 VEIC TOTEM SAI",
+    "localOficial": "",
+    "tipo": "Totem",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 23,
+    "statusRede": "Online",
+    "area": "SP4",
+    "ip": "10.193.239.35",
+    "mac": "00012A024F15",
+    "name": "SP4 VEIC TOTEM ENT",
+    "localOficial": "",
+    "tipo": "Totem",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 24,
+    "statusRede": "Online",
+    "area": "SP1",
+    "ip": "10.193.239.38",
+    "mac": "00012A02731F",
+    "name": "SP1 VEIC TOTEM ENT A",
+    "localOficial": "SP1 totem entrada",
+    "tipo": "Totem",
+    "modelo": "Totem",
+    "fw": "04.A3.26",
+    "codigo": "71.250.018.1CXX",
+    "serial": "102",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 25,
+    "statusRede": "Online",
+    "area": "RIG1",
+    "ip": "10.193.239.39",
+    "mac": "00012A027323",
+    "name": "RGI1 - SALA UNICA",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 26,
+    "statusRede": "Online",
+    "area": "RIG1",
+    "ip": "10.193.239.40",
+    "mac": "00012A00EFE6",
+    "name": "RGI1 - PAINEL PIER",
+    "localOficial": "",
+    "tipo": "",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 27,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.42",
+    "mac": "00012A024981",
+    "name": "PORTAO MECANICA",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 28,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.43",
+    "mac": "00012A00B91A",
+    "name": "MD SALA ELETRICA",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 29,
+    "statusRede": "Online",
+    "area": "ADM",
+    "ip": "10.193.239.44",
+    "mac": "SEM_MAC",
+    "name": "RIG AUTOMACAO ADM",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 30,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.45",
+    "mac": "00012A0289BC",
+    "name": "RIG - LAB AUTOMACAO",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 31,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.50",
+    "mac": "00012A0277A2",
+    "name": "SPARE PARTS 2",
+    "localOficial": "Spare Parts 2",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.35.08",
+    "codigo": "71.250.260.6CXX",
+    "serial": "407",
+    "statusVinculo": "Vinculado",
+    "observacao": ""
+  },
+  {
+    "number": 32,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.239.52",
+    "mac": "SEM_MAC",
+    "name": "SP3 - SALA REVISTA",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 33,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.53",
+    "mac": "00012A024F16",
+    "name": "Spare Parts 1",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 34,
+    "statusRede": "Online",
+    "area": "RIG1",
+    "ip": "10.193.239.54",
+    "mac": "00012A00DA88",
+    "name": "RIG1 - Fer. Civil",
+    "localOficial": "Civil ferramentaria",
+    "tipo": "",
+    "modelo": "MD400",
+    "fw": "03.A3.26",
+    "codigo": "71.250.260.6CXX",
+    "serial": "245",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 35,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.55",
+    "mac": "00012A00B47B",
+    "name": "AUTOMACAO",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 36,
+    "statusRede": "Online",
+    "area": "477",
+    "ip": "10.193.239.56",
+    "mac": "00012A011316",
+    "name": "CR 477 Fundos",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 37,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.239.57",
+    "mac": "00012A0277A3",
+    "name": "CCCOM",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 38,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.240.18",
+    "mac": "00012A024F14",
+    "name": "Sala Patrimonial",
+    "localOficial": "Sala patrimonial",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "04.A3.26",
+    "codigo": "71.250.260.6CXX",
+    "serial": "189",
+    "statusVinculo": "Vinculado",
+    "observacao": ""
+  },
+  {
+    "number": 39,
+    "statusRede": "Online",
+    "area": "ADM",
+    "ip": "10.193.240.19",
+    "mac": "00012A026B7B",
+    "name": "PORTA DE VIDRO ADM",
+    "localOficial": "Porta vidro ADM",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.14.01",
+    "codigo": "71.250.260.6CXX",
+    "serial": "326",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 40,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.240.20",
+    "mac": "00012A021BF3",
+    "name": "REP SALA CORRETIVA / SALA DA ELETRICA",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 41,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.240.21",
+    "mac": "00012A00783F",
+    "name": "REP SP3 03",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 42,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.240.22",
+    "mac": "00012A001582",
+    "name": "REP SP3 02",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 43,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.240.23",
+    "mac": "00012A0272DB",
+    "name": "REP SP3 01",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 44,
+    "statusRede": "Online",
+    "area": "RIG1",
+    "ip": "10.193.240.24",
+    "mac": "00012A024F13",
+    "name": "RIG1-MD FERRAMENTA",
+    "localOficial": "Ferramentaria",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.28.08",
+    "codigo": "71.250.260.6CXX",
+    "serial": "220",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 45,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.240.25",
+    "mac": "00012A022DDB",
+    "name": "REP SALA AUTOMACAO",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 46,
+    "statusRede": "Online",
+    "area": "477",
+    "ip": "10.193.240.26",
+    "mac": "00012A011D80",
+    "name": "CR 477 Frente",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 47,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.240.27",
+    "mac": "00012A0253D6",
+    "name": "REP SP3 04",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 48,
+    "statusRede": "Online",
+    "area": "SP4",
+    "ip": "10.193.240.28",
+    "mac": "00012A009FE2",
+    "name": "REP PIER SP4",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 49,
+    "statusRede": "Online",
+    "area": "SP3",
+    "ip": "10.193.240.29",
+    "mac": "00012A00110A",
+    "name": "REP SP3 05",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 50,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.193.240.30",
+    "mac": "00012A005C15",
+    "name": "CR-500",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 51,
+    "statusRede": "Online",
+    "area": "479",
+    "ip": "10.198.34.17",
+    "mac": "SEM_MAC",
+    "name": "CR479 DATA CENTER",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 52,
+    "statusRede": "Online",
+    "area": "SP5",
+    "ip": "10.198.34.18",
+    "mac": "SEM_MAC",
+    "name": "SP5-TORN DUP ESQ COF",
+    "localOficial": "SP5 esq entrada torniquete",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "04.99.26",
+    "codigo": "74.385.018.0TS",
+    "serial": "15733",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 53,
+    "statusRede": "Online",
+    "area": "SP5",
+    "ip": "10.198.34.19",
+    "mac": "SEM_MAC",
+    "name": "SP5-TORN DUP DIR",
+    "localOficial": "SP5 dir entrada torniquete",
+    "tipo": "Torniquete",
+    "modelo": "Torniquete",
+    "fw": "",
+    "codigo": "81.250.261.1CXX",
+    "serial": "110",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 54,
+    "statusRede": "Online",
+    "area": "SP5",
+    "ip": "10.198.34.20",
+    "mac": "00012A045EA7",
+    "name": "SP5-SALA REVISTA",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 55,
+    "statusRede": "Online",
+    "area": "479",
+    "ip": "10.198.34.21",
+    "mac": "SEM_MAC",
+    "name": "CR479.CCCOM",
+    "localOficial": "479 sala CCCOM",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "04.99.26",
+    "codigo": "70.250.071.1CXX",
+    "serial": "1372",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 56,
+    "statusRede": "Online",
+    "area": "479",
+    "ip": "10.198.34.22",
+    "mac": "SEM_MAC",
+    "name": "RIG1 - CR479.ELETR.D",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 57,
+    "statusRede": "Online",
+    "area": "479",
+    "ip": "10.198.34.25",
+    "mac": "SEM_MAC",
+    "name": "SPARE PARTS 479",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 58,
+    "statusRede": "Online",
+    "area": "479",
+    "ip": "10.198.34.28",
+    "mac": "SEM_MAC",
+    "name": "CR479 ELETR.E",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 59,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.198.34.29",
+    "mac": "SEM_MAC",
+    "name": "REP MISTURA 02",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 60,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.198.34.30",
+    "mac": "SEM_MAC",
+    "name": "REP MISTURA 01",
+    "localOficial": "",
+    "tipo": "REP",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 61,
+    "statusRede": "Online",
+    "area": "479A",
+    "ip": "10.198.34.66",
+    "mac": "SEM_MAC",
+    "name": "CR479A P63 PAINEL",
+    "localOficial": "479A painel",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.24.07A",
+    "codigo": "71.250.259.1CXX",
+    "serial": "1714",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 62,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.198.34.68",
+    "mac": "SEM_MAC",
+    "name": "Sala CCCOM",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 63,
+    "statusRede": "Online",
+    "area": "479A",
+    "ip": "10.198.34.69",
+    "mac": "SEM_MAC",
+    "name": "CR479A P63 SUBSTACAO",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 64,
+    "statusRede": "Online",
+    "area": "479A",
+    "ip": "10.198.34.70",
+    "mac": "SEM_MAC",
+    "name": "CR479A P63 TA DC",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 65,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.198.34.71",
+    "mac": "SEM_MAC",
+    "name": "Sala Balanca Bidirec",
+    "localOficial": "SP5 sala balança",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.25.07",
+    "codigo": "71.250.260.6CXX",
+    "serial": "320",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 66,
+    "statusRede": "Online",
+    "area": "",
+    "ip": "10.198.34.72",
+    "mac": "SEM_MAC",
+    "name": "Sala Bolsao Ent",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 67,
+    "statusRede": "Online",
+    "area": "478A",
+    "ip": "10.198.34.73",
+    "mac": "SEM_MAC",
+    "name": "CR478-A Frente",
+    "localOficial": "478A entrada",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.16.02",
+    "codigo": "71.250.260.6CXX",
+    "serial": "315",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 68,
+    "statusRede": "Online",
+    "area": "478A",
+    "ip": "10.198.34.74",
+    "mac": "SEM_MAC",
+    "name": "CR 478-A Fundos",
+    "localOficial": "478A fundos",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "11.14.01",
+    "codigo": "71.250.259.1CXX",
+    "serial": "548",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 69,
+    "statusRede": "Online",
+    "area": "478",
+    "ip": "10.198.34.75",
+    "mac": "SEM_MAC",
+    "name": "CR 478 Frente",
+    "localOficial": "478 entrada",
+    "tipo": "Controle de acesso",
+    "modelo": "MD400",
+    "fw": "",
+    "codigo": "71.250.259.1CXX",
+    "serial": "1662",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 70,
+    "statusRede": "Online",
+    "area": "478",
+    "ip": "10.198.34.77",
+    "mac": "SEM_MAC",
+    "name": "CR 478-B",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  },
+  {
+    "number": 71,
+    "statusRede": "Offline",
+    "area": "SP3",
+    "ip": "10.193.239.25",
+    "mac": "00012A045BC4",
+    "name": "SP3 REFEITORIO DIR",
+    "localOficial": "SP3 CATRACA REFEITÓRIO DIREITA",
+    "tipo": "Catraca",
+    "modelo": "Catraca",
+    "fw": "04.A3.26",
+    "codigo": "81.250.274.1CXX",
+    "serial": "108",
+    "statusVinculo": "Vinculado",
+    "observacao": "Nome diferente na lista de IP"
+  },
+  {
+    "number": 72,
+    "statusRede": "Offline",
+    "area": "RIG1",
+    "ip": "10.193.240.60",
+    "mac": "SEM_MAC",
+    "name": "RIG1 -CODIN MD CIVIL",
+    "localOficial": "",
+    "tipo": "Controle de acesso",
+    "modelo": "",
+    "fw": "",
+    "codigo": "",
+    "serial": "",
+    "statusVinculo": "Sem vínculo modelo/código",
+    "observacao": ""
+  }
+];
+
+const DEVICE_STORE_KEY = "yara_inventario_rig1_devices";
+const PRINT_VISIBILITY_STORE_KEY = "yara_relatorio_campos_impressao";
+const SAME_DAY_DUPLICATES_STORE_KEY = "yara_permitir_repetidos_mesmo_dia";
+const STORAGE_PREFIX = "yara_relatorio_completo_dia_";
+const DATABASE_NAME = "yara_relatorio_completo";
+const DATABASE_STORE = "dias";
+const PRINT_FIELDS = [
+  { key: "equipmentType", label: "Equip." },
+  { key: "location", label: "Local" },
+  { key: "area", label: "Área" },
+  { key: "ip", label: "IP" },
+  { key: "mac", label: "MAC" },
+  { key: "fw", label: "FW" },
+  { key: "codigo", label: "Código" },
+  { key: "serial", label: "S/N" },
+  { key: "date", label: "Data" },
+  { key: "service", label: "Serviço" },
+  { key: "status", label: "Status" },
+  { key: "notes", label: "Obs." },
+  { key: "beforeImage", label: "Foto antes" },
+  { key: "afterImage", label: "Foto depois" }
+];
+let isLoadingReport = false;
+let reportDirty = false;
+let saveStatusTimer = null;
+let currentDayKey = todayISO();
+let printFieldVisibility = {};
+let monthlyUsedDeviceIps = new Set();
+let allowSameDayDuplicates = localStorage.getItem(SAME_DAY_DUPLICATES_STORE_KEY) === "true";
+
+function deviceUsageKeyFromParts({ ip = "", location = "", name = "" } = {}) {
+  const normalizedIp = String(ip || "").trim().toLowerCase();
+  if (normalizedIp) return `ip:${normalizedIp}`;
+
+  const normalizedName = normalizeSearch([location, name].filter(Boolean).join(" "));
+  return normalizedName ? `name:${normalizedName}` : "";
+}
+
+function deviceUsageKey(device = {}) {
+  return deviceUsageKeyFromParts({
+    ip: device.ip,
+    location: device.localOficial || device.name,
+    name: device.name
+  });
+}
+
+function reportItemUsageKey(item = {}) {
+  return deviceUsageKeyFromParts({
+    ip: item.ip,
+    location: item.location,
+    name: item.title
+  });
+}
+
+function cloneDevices(devices = DEFAULT_DEVICE_DATA) {
+  return JSON.parse(JSON.stringify(devices));
+}
+
+function normalizeDevice(device = {}, index = 0) {
+  return {
+    number: device.number || index + 1,
+    statusRede: device.statusRede || "Online",
+    area: device.area || "",
+    ip: device.ip || "",
+    mac: device.mac || "",
+    name: device.name || "",
+    localOficial: device.localOficial || "",
+    tipo: device.tipo || "",
+    modelo: device.modelo || "",
+    fw: device.fw || "",
+    codigo: device.codigo || "",
+    serial: device.serial || "",
+    statusVinculo: device.statusVinculo || "",
+    observacao: device.observacao || ""
+  };
+}
+
+const WINDOWS_1252_BYTE_MAP = {
+  "\u20ac": 0x80,
+  "\u201a": 0x82,
+  "\u0192": 0x83,
+  "\u201e": 0x84,
+  "\u2026": 0x85,
+  "\u2020": 0x86,
+  "\u2021": 0x87,
+  "\u02c6": 0x88,
+  "\u2030": 0x89,
+  "\u0160": 0x8a,
+  "\u2039": 0x8b,
+  "\u0152": 0x8c,
+  "\u017d": 0x8e,
+  "\u2018": 0x91,
+  "\u2019": 0x92,
+  "\u201c": 0x93,
+  "\u201d": 0x94,
+  "\u2022": 0x95,
+  "\u2013": 0x96,
+  "\u2014": 0x97,
+  "\u02dc": 0x98,
+  "\u2122": 0x99,
+  "\u0161": 0x9a,
+  "\u203a": 0x9b,
+  "\u0153": 0x9c,
+  "\u017e": 0x9e,
+  "\u0178": 0x9f
+};
+
+function bytesFromBrokenText(value) {
+  const bytes = [];
+
+  for (const char of value) {
+    const code = char.charCodeAt(0);
+
+    if (code <= 0xff) {
+      bytes.push(code);
+    } else if (WINDOWS_1252_BYTE_MAP[char] !== undefined) {
+      bytes.push(WINDOWS_1252_BYTE_MAP[char]);
+    } else {
+      return null;
+    }
+  }
+
+  return bytes;
+}
+
+function repairMojibakeText(value) {
+  if (typeof value !== "string" || !value) return value;
+
+  const brokenRun = /[\u00c2\u00c3\u00e2\u00c5][\u0080-\u00bf\u00a0-\u00bf\u20ac\u201a\u0192\u201e\u2026\u2020\u2021\u02c6\u2030\u0160\u2039\u0152\u017d\u2018\u2019\u201c\u201d\u2022\u2013\u2014\u02dc\u2122\u0161\u203a\u0153\u017e\u0178]+/g;
+
+  return value.replace(brokenRun, text => {
+    const bytes = bytesFromBrokenText(text);
+    if (!bytes) return text;
+
+    try {
+      return new TextDecoder("utf-8", { fatal: true }).decode(new Uint8Array(bytes));
+    } catch (error) {
+      return text;
+    }
+  });
+}
+
+function repairSavedText(value) {
+  if (typeof value === "string") return repairMojibakeText(value);
+  if (Array.isArray(value)) return value.map(repairSavedText);
+  if (!value || typeof value !== "object") return value;
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, entry]) => [key, repairSavedText(entry)])
+  );
+}
+
+function getDevices() {
+  try {
+    const raw = localStorage.getItem(DEVICE_STORE_KEY);
+    if (!raw) return dedupeDevices(cloneDevices());
+
+    const saved = JSON.parse(raw);
+    if (Array.isArray(saved) && saved.length) {
+      return dedupeDevices(saved.map((device, index) => normalizeDevice(repairSavedText(device), index)));
+    }
+  } catch (error) {
+    console.warn("Cadastro local ignorado:", error);
+  }
+
+  return dedupeDevices(cloneDevices());
+}
+
+function normalizeDeviceReference(value) {
+  return normalizeSearch(value).replace(/\s+/g, " ");
+}
+
+function deviceIdentityRefs(device = {}) {
+  const refs = [];
+  const ip = normalizeDeviceReference(device.ip);
+  const mac = normalizeDeviceReference(device.mac);
+  const name = normalizeDeviceReference(device.name);
+
+  if (ip) refs.push(`ip:${ip}`);
+  if (mac && mac !== "sem_mac") refs.push(`mac:${mac}`);
+  if (name) refs.push(`name:${name}`);
+  return refs;
+}
+
+function mergeDeviceRecord(base, incoming) {
+  const merged = { ...base };
+  Object.entries(incoming || {}).forEach(([key, value]) => {
+    if (merged[key] === undefined || (!String(merged[key] ?? "").trim() && String(value ?? "").trim())) merged[key] = value;
+  });
+  merged.number = base.number || incoming.number;
+  return merged;
+}
+
+function dedupeDevices(devices = []) {
+  const normalized = [];
+  const refToIndex = new Map();
+
+  devices
+    .filter(device => device?.ip || device?.name)
+    .map((device, index) => normalizeDevice(repairSavedText(device), index))
+    .forEach(device => {
+      const refs = deviceIdentityRefs(device);
+      const existingIndexes = refs.map(ref => refToIndex.get(ref)).filter(index => index !== undefined);
+
+      if (existingIndexes.length) {
+        const targetIndex = Math.min(...existingIndexes);
+        normalized[targetIndex] = mergeDeviceRecord(normalized[targetIndex], device);
+        deviceIdentityRefs(normalized[targetIndex]).forEach(ref => refToIndex.set(ref, targetIndex));
+        return;
+      }
+
+      normalized.push(device);
+      const targetIndex = normalized.length - 1;
+      refs.forEach(ref => refToIndex.set(ref, targetIndex));
+    });
+
+  return normalized.sort((a, b) => Number(a.number || 0) - Number(b.number || 0));
+}
+
+function saveDeviceData(devices) {
+  const normalized = dedupeDevices(devices);
+
+  localStorage.setItem(DEVICE_STORE_KEY, JSON.stringify(normalized));
+  apiSaveDevices(normalized).catch(error => console.warn("Base de equipamentos não salva no servidor:", error));
+  refreshDeviceSelectors();
+  return normalized;
+}
+
+function findDeviceByIp(ip) {
+  return getDevices().find(device => device.ip === ip) || null;
+}
+
+function deviceSearchText(device) {
+  return normalizeSearch([
+    device.name,
+    device.localOficial,
+    device.ip,
+    device.mac,
+    device.area,
+    device.tipo,
+    device.modelo,
+    device.fw,
+    device.codigo,
+    device.serial,
+    device.statusRede,
+    device.statusVinculo,
+    device.observacao
+  ].join(" "));
+}
+
+function deviceEquipmentType(device) {
+  return device.modelo || device.tipo || DEFAULT_EQUIPMENT.equipmentType;
+}
+
+function deviceLocation(device) {
+  return device.localOficial || device.name || "";
+}
+
+function equipmentFromSavedData(data = {}) {
+  const fixed = repairSavedText(data) || {};
+  const device = fixed.ip ? findDeviceByIp(fixed.ip) : null;
+
+  return {
+    ...DEFAULT_EQUIPMENT,
+    ...fixed,
+    equipmentType: fixed.equipmentType || (device ? deviceEquipmentType(device) : ""),
+    location: fixed.location || (device ? deviceLocation(device) : ""),
+    area: fixed.area || device?.area || "",
+    mac: fixed.mac || device?.mac || "",
+    fw: fixed.fw || device?.fw || "",
+    codigo: fixed.codigo || device?.codigo || "",
+    serial: fixed.serial || device?.serial || ""
+  };
+}
+
+function deviceDetailsHtml(device) {
+  const details = [
+    ["Área", device?.area || ""],
+    ["MAC", device?.mac || ""],
+    ["Rede", device?.statusRede || ""],
+    ["FW", device?.fw || ""],
+    ["Código", device?.codigo || ""],
+    ["S/N", device?.serial || ""]
+  ];
+
+  return details.map(([label, value]) => `
+    <div class="device-detail">
+      <strong>${escapeHtml(label)}</strong>
+      <span title="${escapeHtml(value || "-")}">${escapeHtml(value || "-")}</span>
+    </div>
+  `).join("");
+}
+
+function updateCardDeviceDetails(card, device = null) {
+  const details = card?.querySelector("[data-device-details]");
+  if (!details) return;
+
+  const currentIp = card.querySelector('[data-field="ip"]')?.textContent.trim();
+  const selected = device || findDeviceByIp(currentIp);
+  details.innerHTML = deviceDetailsHtml(selected);
+}
+
+function applyDeviceToCard(card, device) {
+  if (!card || !device) return;
+
+  const equipmentCell = card.querySelector('[data-field="equipmentType"]');
+  const locationCell = card.querySelector('[data-field="location"]');
+  const areaCell = card.querySelector('[data-field="area"]');
+  const ipCell = card.querySelector('[data-field="ip"]');
+  const macCell = card.querySelector('[data-field="mac"]');
+  const fwCell = card.querySelector('[data-field="fw"]');
+  const codigoCell = card.querySelector('[data-field="codigo"]');
+  const serialCell = card.querySelector('[data-field="serial"]');
+
+  if (equipmentCell) equipmentCell.textContent = deviceEquipmentType(device);
+  if (locationCell) locationCell.textContent = deviceLocation(device);
+  if (areaCell) areaCell.textContent = device.area || "";
+  if (ipCell) ipCell.textContent = device.ip || "";
+  if (macCell) macCell.textContent = device.mac || "";
+  if (fwCell) fwCell.textContent = device.fw || "";
+  if (codigoCell) codigoCell.textContent = device.codigo || "";
+  if (serialCell) serialCell.textContent = device.serial || "";
+  updateCardDeviceDetails(card, device);
+}
+
+function deviceToEquipment(device) {
+  return {
+    ...DEFAULT_EQUIPMENT,
+    equipmentType: deviceEquipmentType(device),
+    location: deviceLocation(device),
+    area: device.area || "",
+    ip: device.ip || "",
+    mac: device.mac || "",
+    fw: device.fw || "",
+    codigo: device.codigo || "",
+    serial: device.serial || "",
+    date: document.getElementById("dataRelatorio")?.textContent.trim() || todayBR()
+  };
+}
+
+function refreshDeviceSelectors() {
+  document.querySelectorAll("#reportPage [data-device-select]").forEach(select => {
+    const card = select.closest("[data-equipment]");
+    const currentLocation = card?.querySelector('[data-field="location"]')?.textContent.trim() || "";
+    const currentIp = card?.querySelector('[data-field="ip"]')?.textContent.trim() || "";
+    const search = card?.querySelector("[data-device-search]")?.value || "";
+
+    select.innerHTML = buildDeviceOptions(currentLocation, currentIp, search);
+    updateCardDeviceDetails(card);
+  });
+}
+
+function openReportDatabase() {
+  return new Promise((resolve, reject) => {
+    if (!window.indexedDB) {
+      reject(new Error("IndexedDB indisponível"));
+      return;
+    }
+
+    const request = indexedDB.open(DATABASE_NAME, 1);
+
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(DATABASE_STORE)) {
+        db.createObjectStore(DATABASE_STORE);
+      }
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveToDatabase(data, dayKey = currentDayKey) {
+  const db = await openReportDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATABASE_STORE, "readwrite");
+    transaction.objectStore(DATABASE_STORE).put(data, dayKey);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function loadFromDatabase(dayKey = currentDayKey) {
+  const db = await openReportDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATABASE_STORE, "readonly");
+    const request = transaction.objectStore(DATABASE_STORE).get(dayKey);
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+async function deleteFromDatabase(dayKey = currentDayKey) {
+  const db = await openReportDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATABASE_STORE, "readwrite");
+    transaction.objectStore(DATABASE_STORE).delete(dayKey);
+    transaction.oncomplete = () => {
+      db.close();
+      resolve();
+    };
+    transaction.onerror = () => {
+      db.close();
+      reject(transaction.error);
+    };
+  });
+}
+
+async function getAllFromDatabase() {
+  const db = await openReportDatabase();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(DATABASE_STORE, "readonly");
+    const request = transaction.objectStore(DATABASE_STORE).getAll();
+    request.onsuccess = () => resolve(request.result || []);
+    request.onerror = () => reject(request.error);
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+function storageKey(dayKey = currentDayKey) {
+  return `${STORAGE_PREFIX}${dayKey}`;
+}
+
+function markReportDirty() {
+  if (!isLoadingReport) reportDirty = true;
+}
+
+async function saveCurrentIfDirty() {
+  if (!reportDirty) return true;
+  return saveReport(true);
+}
+
+async function apiSaveReport(data) {
+  const response = await fetch("/api/report", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || "Falha ao salvar no servidor");
+  return result;
+}
+
+async function apiLoadReport(dayKey) {
+  const response = await fetch(`/api/report?dayKey=${encodeURIComponent(dayKey)}`);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  const result = await response.json();
+  return result.ok ? repairSavedText(result.report) : null;
+}
+
+async function apiLoadReports() {
+  const response = await fetch("/api/reports");
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  const result = await response.json();
+  return Array.isArray(result.reports) ? result.reports.map(repairSavedText) : [];
+}
+
+async function apiDeleteReport(dayKey) {
+  const response = await fetch(`/api/report?dayKey=${encodeURIComponent(dayKey)}`, { method: "DELETE" });
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  return response.json();
+}
+
+async function apiLoadDevices() {
+  const response = await fetch("/api/devices");
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  const result = await response.json();
+  return Array.isArray(result.devices) ? result.devices.map(repairSavedText) : [];
+}
+
+async function apiSaveDevices(devices) {
+  const response = await fetch("/api/devices", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ devices: dedupeDevices(devices) })
+  });
+
+  if (!response.ok) throw new Error(`Servidor retornou ${response.status}`);
+  const result = await response.json();
+  if (!result.ok) throw new Error(result.error || "Falha ao salvar equipamentos");
+  return result;
+}
+
+async function initializeDeviceBase() {
+  try {
+    const serverDevices = await apiLoadDevices();
+    if (serverDevices.length) {
+      const normalized = dedupeDevices(serverDevices);
+      localStorage.setItem(DEVICE_STORE_KEY, JSON.stringify(normalized));
+      return normalized;
+    }
+  } catch (error) {
+    console.warn("Base de equipamentos do servidor indisponível:", error);
+  }
+
+  const localDevices = dedupeDevices(getDevices());
+  localStorage.setItem(DEVICE_STORE_KEY, JSON.stringify(localDevices));
+  try {
+    await apiSaveDevices(localDevices);
+  } catch (error) {
+    console.warn("Base original não enviada ao servidor:", error);
+  }
+  return localDevices;
+}
+
+function todayISO() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function isoToBR(value) {
+  const parts = String(value || "").split("-");
+  return parts.length === 3 ? `${parts[2]}/${parts[1]}/${parts[0]}` : value;
+}
+
+function brToISO(value) {
+  const parts = String(value || "").split("/");
+  return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : value;
+}
+
+function monthName(monthKey) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return new Date(year, month - 1, 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric"
+  });
+}
+
+function withoutImages(data) {
+  return {
+    ...data,
+    equipment: data.equipment.map(item => ({
+      ...item,
+      beforeImage: "",
+      afterImage: ""
+    }))
+  };
+}
+
+function showSaveStatus(type, text) {
+  const button = document.getElementById("saveButton");
+  if (!button) return;
+
+  clearTimeout(saveStatusTimer);
+  button.classList.remove("saved", "save-error");
+  if (type) button.classList.add(type);
+  button.textContent = text;
+
+  saveStatusTimer = setTimeout(() => {
+    button.classList.remove("saved", "save-error");
+    button.textContent = "Salvar";
+  }, 2200);
+}
+
+const DEFAULT_EQUIPMENT = {
+  equipmentType: "CODIN MD400",
+  location: "SPARE PARTS 2",
+  area: "",
+  ip: "10.193.239.50",
+  mac: "",
+  fw: "",
+  codigo: "",
+  serial: "",
+  date: todayBR(),
+  service: "Limpeza externa, inspeção visual, verificação funcional do display, inspeção do leitor e conferência das condições físicas.",
+  status: "Operacional",
+  notes: "Equipamento verificado durante a preventiva. Sem falha aparente no momento do registro.",
+  beforeImage: "",
+  afterImage: ""
+};
+
+function padNumber(num) {
+  return String(num).padStart(2, "0");
+}
+
+function todayBR() {
+  const d = new Date();
+  return d.toLocaleDateString("pt-BR");
+}
+
+function monthKeyFromDay(dayKey = currentDayKey) {
+  return String(dayKey || todayISO()).slice(0, 7);
+}
+
+function collectUsedIpsFromReport(report) {
+  if (!report?.dayKey) return [];
+  if (!report.dayKey.startsWith(monthKeyFromDay(currentDayKey))) return [];
+  if (report.dayKey === currentDayKey) return [];
+
+  return (report.equipment || [])
+    .map(item => reportItemUsageKey(item))
+    .filter(Boolean);
+}
+
+function collectUsedIpsFromCurrentPage(exceptIp = "") {
+  return Array.from(document.querySelectorAll('#reportPage [data-field="ip"]'))
+    .map(cell => cell.textContent.trim())
+    .filter(ip => ip && ip !== exceptIp);
+}
+
+async function refreshMonthlyUsedDevices(refreshSelectors = true) {
+  try {
+    const reports = await getAllReports();
+    monthlyUsedDeviceIps = new Set(
+      reports.flatMap(report => collectUsedIpsFromReport(report))
+    );
+  } catch (error) {
+    console.warn("Não foi possível atualizar equipamentos usados no mês:", error);
+    monthlyUsedDeviceIps = new Set();
+  }
+
+  if (refreshSelectors) refreshDeviceSelectors();
+}
+
+function updateSameDayDuplicatesButton() {
+  const button = document.getElementById("sameDayDuplicatesButton");
+  if (!button) return;
+
+  button.textContent = allowSameDayDuplicates ? "Usados no mês: Mostrar" : "Usados no mês: Ocultar";
+  button.classList.toggle("blue", allowSameDayDuplicates);
+  button.classList.toggle("secondary", !allowSameDayDuplicates);
+}
+
+function toggleSameDayDuplicates() {
+  allowSameDayDuplicates = !allowSameDayDuplicates;
+  localStorage.setItem(SAME_DAY_DUPLICATES_STORE_KEY, allowSameDayDuplicates ? "true" : "false");
+  updateSameDayDuplicatesButton();
+  refreshDeviceSelectors();
+}
+
+function buildDeviceOptions(selectedLocation, selectedIp = "", searchText = "") {
+  let html = `<option value="">Selecionar nome/IP cadastrado...</option>`;
+  const search = normalizeSearch(searchText);
+  const usedKeys = allowSameDayDuplicates ? new Set() : monthlyUsedDeviceIps;
+  const selectedKey = deviceUsageKeyFromParts({ ip: selectedIp, location: selectedLocation });
+  const listedKeys = new Set();
+
+  getDevices()
+    .slice()
+    .sort((a, b) => {
+      const areaCompare = String(a.area || "").localeCompare(String(b.area || ""), "pt-BR", { numeric: true, sensitivity: "base" });
+      if (areaCompare) return areaCompare;
+      return String(a.name || a.localOficial || a.ip || "").localeCompare(String(b.name || b.localOficial || b.ip || ""), "pt-BR", { numeric: true, sensitivity: "base" });
+    })
+    .forEach(device => {
+    const isSelected = device.ip === selectedIp || (!selectedIp && [device.name, device.localOficial].includes(selectedLocation));
+    const usageKey = deviceUsageKey(device);
+    if (!isSelected && usageKey && usedKeys.has(usageKey)) return;
+    if (!isSelected && usageKey && listedKeys.has(usageKey)) return;
+
+    const optionText = normalizeSearch(`${device.name || ""} ${device.ip || ""} ${device.mac || ""} ${device.area || ""} ${device.modelo || ""} ${device.codigo || ""}`);
+    if (search && !optionText.includes(search)) return;
+
+    const status = device.statusRede ? ` | ${device.statusRede}` : "";
+    const mac = device.mac ? ` | ${device.mac}` : "";
+    if (usageKey) listedKeys.add(usageKey);
+    html += `<option value="${escapeHtml(device.ip)}" data-name="${escapeHtml(device.name)}" ${isSelected ? "selected" : ""}>${escapeHtml(device.name)} - ${escapeHtml(device.ip)}${escapeHtml(status)}${escapeHtml(mac)}</option>`;
+  });
+  return html;
+}
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function defaultPrintVisibility() {
+  return Object.fromEntries(PRINT_FIELDS.map(field => [field.key, true]));
+}
+
+function normalizePrintVisibility(saved = {}) {
+  const defaults = defaultPrintVisibility();
+  PRINT_FIELDS.forEach(field => {
+    defaults[field.key] = saved[field.key] !== false;
+  });
+  return defaults;
+}
+
+function loadPrintVisibility() {
+  try {
+    const raw = localStorage.getItem(PRINT_VISIBILITY_STORE_KEY);
+    return normalizePrintVisibility(raw ? JSON.parse(raw) : {});
+  } catch (error) {
+    console.warn("Preferência de impressão indisponível:", error);
+    return defaultPrintVisibility();
+  }
+}
+
+function savePrintVisibility() {
+  try {
+    localStorage.setItem(PRINT_VISIBILITY_STORE_KEY, JSON.stringify(printFieldVisibility));
+  } catch (error) {
+    console.warn("Preferência de impressão não salva:", error);
+  }
+}
+
+function updatePrintToggleInputs() {
+  PRINT_FIELDS.forEach(field => {
+    const input = document.querySelector(`[data-print-toggle="${field.key}"]`);
+    if (input) input.checked = printFieldVisibility[field.key] !== false;
+  });
+
+  const master = document.getElementById("printToggleAll");
+  if (!master) return;
+
+  const visibleCount = PRINT_FIELDS.filter(field => printFieldVisibility[field.key] !== false).length;
+  master.checked = visibleCount === PRINT_FIELDS.length;
+  master.indeterminate = visibleCount > 0 && visibleCount < PRINT_FIELDS.length;
+}
+
+function renderPrintFieldToggles() {
+  const container = document.getElementById("printFieldToggles");
+  if (!container) return;
+
+  container.innerHTML = PRINT_FIELDS.map(field => `
+    <label class="print-option" title="Mostrar ou ocultar ${escapeHtml(field.label)} na impressão">
+      <input type="checkbox" data-print-toggle="${escapeHtml(field.key)}" onchange="setPrintFieldVisibility('${escapeHtml(field.key)}', this.checked)">
+      <span>${escapeHtml(field.label)}</span>
+    </label>
+  `).join("");
+
+  updatePrintToggleInputs();
+}
+
+function applyPrintVisibility() {
+  const infoKeys = PRINT_FIELDS
+    .filter(field => !["beforeImage", "afterImage"].includes(field.key))
+    .map(field => field.key);
+  const hasVisibleInfo = infoKeys.some(key => printFieldVisibility[key] !== false);
+  const beforeVisible = printFieldVisibility.beforeImage !== false;
+  const afterVisible = printFieldVisibility.afterImage !== false;
+  const visiblePhotoCount = Number(beforeVisible) + Number(afterVisible);
+
+  document
+    .querySelectorAll("#printOutput [data-print-field], #monthlyOutput [data-print-field]")
+    .forEach(element => {
+      const key = element.getAttribute("data-print-field");
+      element.classList.toggle("print-hidden", printFieldVisibility[key] === false);
+    });
+
+  document
+    .querySelectorAll("#printOutput .info-table, #monthlyOutput .info-table")
+    .forEach(table => {
+      table.classList.toggle("print-hidden", !hasVisibleInfo);
+    });
+
+  document
+    .querySelectorAll("#printOutput .equipment-body, #monthlyOutput .equipment-body")
+    .forEach(body => {
+      body.classList.toggle("print-layout-no-info", !hasVisibleInfo);
+      body.classList.toggle("print-layout-no-photos", visiblePhotoCount === 0);
+      body.classList.toggle("print-layout-one-photo", visiblePhotoCount === 1);
+    });
+
+  updatePrintToggleInputs();
+}
+
+function setPrintFieldVisibility(key, visible) {
+  if (!PRINT_FIELDS.some(field => field.key === key)) return;
+
+  printFieldVisibility[key] = Boolean(visible);
+  savePrintVisibility();
+  applyPrintVisibility();
+}
+
+function setAllPrintFields(visible) {
+  PRINT_FIELDS.forEach(field => {
+    printFieldVisibility[field.key] = Boolean(visible);
+  });
+
+  savePrintVisibility();
+  applyPrintVisibility();
+}
+
+function initializePrintVisibilityControls() {
+  printFieldVisibility = loadPrintVisibility();
+  renderPrintFieldToggles();
+  applyPrintVisibility();
+}
+
+function equipmentTemplate(data, index) {
+  const item = equipmentFromSavedData(data);
+  const cardId = `eq-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+
+  return `
+    <article class="equipment-card" data-equipment data-id="${cardId}">
+      <div class="equipment-head">
+        <div class="equipment-title" contenteditable="true">Equipamento ${padNumber(index + 1)}</div>
+        <div class="equipment-status" contenteditable="true" data-print-field="status">${escapeHtml(item.status)}</div>
+      </div>
+
+      <div class="device-picker has-search no-show">
+        <label>Selecionar:</label>
+        <select data-device-select>
+          ${buildDeviceOptions(item.location, item.ip)}
+        </select>
+        <button type="button" onclick="applyManual(this)">Manual</button>
+        <button type="button" class="red" onclick="removeEquipment(this)">Remover</button>
+        <input class="device-search" type="search" placeholder="Pesquisar equipamento por nome ou IP..." data-device-search>
+        <div class="device-details" data-device-details>
+          ${deviceDetailsHtml(findDeviceByIp(item.ip))}
+        </div>
+      </div>
+
+      <div class="equipment-body">
+        <table class="info-table">
+          <tbody>
+            <tr data-print-field="equipmentType">
+              <th contenteditable="true">Equipamento</th>
+              <td contenteditable="true" data-field="equipmentType">${escapeHtml(item.equipmentType)}</td>
+            </tr>
+            <tr data-print-field="location">
+              <th contenteditable="true">Local do equipamento</th>
+              <td contenteditable="true" data-field="location">${escapeHtml(item.location)}</td>
+            </tr>
+            <tr data-print-field="area">
+              <th contenteditable="true">Área</th>
+              <td contenteditable="true" data-field="area">${escapeHtml(item.area)}</td>
+            </tr>
+            <tr data-print-field="ip">
+              <th contenteditable="true">IP</th>
+              <td contenteditable="true" data-field="ip">${escapeHtml(item.ip)}</td>
+            </tr>
+            <tr data-print-field="mac">
+              <th contenteditable="true">MAC</th>
+              <td contenteditable="true" data-field="mac">${escapeHtml(item.mac)}</td>
+            </tr>
+            <tr data-print-field="fw">
+              <th contenteditable="true">Firmware</th>
+              <td contenteditable="true" data-field="fw">${escapeHtml(item.fw)}</td>
+            </tr>
+            <tr data-print-field="codigo">
+              <th contenteditable="true">Código</th>
+              <td contenteditable="true" data-field="codigo">${escapeHtml(item.codigo)}</td>
+            </tr>
+            <tr data-print-field="serial">
+              <th contenteditable="true">S/N</th>
+              <td contenteditable="true" data-field="serial">${escapeHtml(item.serial)}</td>
+            </tr>
+            <tr data-print-field="date">
+              <th contenteditable="true">Data da inspeção</th>
+              <td contenteditable="true" data-field="date">${escapeHtml(item.date)}</td>
+            </tr>
+            <tr data-print-field="service">
+              <th contenteditable="true">Serviço executado</th>
+              <td contenteditable="true" data-field="service">${escapeHtml(item.service)}</td>
+            </tr>
+            <tr data-print-field="status">
+              <th contenteditable="true">Status</th>
+              <td contenteditable="true" data-field="status">${escapeHtml(item.status)}</td>
+            </tr>
+            <tr data-print-field="notes">
+              <th contenteditable="true">Observações</th>
+              <td contenteditable="true" data-field="notes">${escapeHtml(item.notes)}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="photo-panel" data-print-field="beforeImage">
+          <div class="photo-header" contenteditable="true">Foto antes</div>
+          <div class="photo-box ${item.beforeImage ? "has-image" : ""}" data-photo-box="before">
+            <div class="photo-placeholder" contenteditable="true">Foto antes</div>
+            <img src="${item.beforeImage || ""}" alt="Foto antes">
+          </div>
+          <div class="photo-actions no-show">
+            <input type="file" accept="image/*" onchange="loadImage(this, 'before')">
+            <button type="button" onclick="this.parentElement.querySelector('input').click()">Escolher</button>
+            <button type="button" class="photo-remove" onclick="removeImage(this, 'before')">Remover</button>
+          </div>
+        </div>
+
+        <div class="photo-panel" data-print-field="afterImage">
+          <div class="photo-header" contenteditable="true">Foto depois</div>
+          <div class="photo-box ${item.afterImage ? "has-image" : ""}" data-photo-box="after">
+            <div class="photo-placeholder" contenteditable="true">Foto depois</div>
+            <img src="${item.afterImage || ""}" alt="Foto depois">
+          </div>
+          <div class="photo-actions no-show">
+            <input type="file" accept="image/*" onchange="loadImage(this, 'after')">
+            <button type="button" onclick="this.parentElement.querySelector('input').click()">Escolher</button>
+            <button type="button" class="photo-remove" onclick="removeImage(this, 'after')">Remover</button>
+          </div>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function refreshNumbers() {
+  const cards = document.querySelectorAll("#equipmentList > [data-equipment]");
+  cards.forEach((card, index) => {
+    const title = card.querySelector(".equipment-title");
+    if (title && /^Equipamento\s+\d+/i.test(title.textContent.trim())) {
+      title.textContent = `Equipamento ${padNumber(index + 1)}`;
+    }
+  });
+
+  document.getElementById("totalEquipamentos").textContent = cards.length;
+}
+
+function addEquipment(data = null) {
+  const list = document.getElementById("equipmentList");
+  const index = list.querySelectorAll("[data-equipment]").length;
+  const item = data || { ...DEFAULT_EQUIPMENT, date: document.getElementById("dataRelatorio")?.textContent.trim() || todayBR() };
+
+  list.insertAdjacentHTML("beforeend", equipmentTemplate(item, index));
+  const createdCard = list.querySelectorAll("[data-equipment]")[index];
+  bindCardEvents();
+  refreshNumbers();
+  if (!isLoadingReport) {
+    markReportDirty();
+    saveReport();
+    refreshDeviceSelectors();
+    guideMobileFlow(createdCard, "select");
+  }
+}
+
+function duplicateLast() {
+  const data = collectReportData();
+  const last = data.equipment[data.equipment.length - 1];
+  addEquipment(last || DEFAULT_EQUIPMENT);
+}
+
+function removeEquipment(button) {
+  const card = button.closest("[data-equipment]");
+  if (!card) return;
+
+  const total = document.querySelectorAll("[data-equipment]").length;
+  if (total <= 1) {
+    alert("O relatório precisa ter pelo menos 1 equipamento.");
+    return;
+  }
+
+  card.remove();
+  refreshNumbers();
+  refreshDeviceSelectors();
+  markReportDirty();
+  saveReport();
+}
+
+function applyManual(button) {
+  const card = button.closest("[data-equipment]");
+  const locationCell = card.querySelector('[data-field="location"]');
+  const ipCell = card.querySelector('[data-field="ip"]');
+
+  locationCell.focus();
+
+  if (!ipCell.textContent.trim()) {
+    ipCell.textContent = "IP manual";
+  }
+
+  markReportDirty();
+  saveReport();
+}
+
+function normalizeSearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function bindCardEvents() {
+  document.querySelectorAll("#reportPage [data-device-select]").forEach(select => {
+    if (select.dataset.bound === "true") return;
+    select.dataset.bound = "true";
+
+    select.addEventListener("change", () => {
+      const option = select.selectedOptions[0];
+      const card = select.closest("[data-equipment]");
+      if (!card || !option || !option.value) return;
+
+      const device = findDeviceByIp(option.value);
+      applyDeviceToCard(card, device);
+
+      markReportDirty();
+      refreshDeviceSelectors();
+      saveReport();
+      guideMobileFlow(card, "before-photo");
+    });
+  });
+
+  document.querySelectorAll("#reportPage [data-device-search]").forEach(input => {
+    if (input.dataset.bound === "true") return;
+    input.dataset.bound = "true";
+
+    input.addEventListener("input", () => {
+      const card = input.closest("[data-equipment]");
+      const select = card?.querySelector("[data-device-select]");
+      if (!select) return;
+
+      const currentLocation = card?.querySelector('[data-field="location"]')?.textContent.trim() || "";
+      const currentIp = card?.querySelector('[data-field="ip"]')?.textContent.trim() || "";
+      select.innerHTML = buildDeviceOptions(currentLocation, currentIp, input.value);
+      updateCardDeviceDetails(card);
+    });
+
+    input.addEventListener("keydown", event => {
+      if (event.key !== "Enter") return;
+
+      const card = input.closest("[data-equipment]");
+      const select = card?.querySelector("[data-device-select]");
+      if (!select) return;
+
+      const firstVisible = Array.from(select.options).find((option, index) => index > 0 && !option.hidden);
+      if (!firstVisible) return;
+
+      event.preventDefault();
+      select.value = firstVisible.value;
+      select.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+
+  document.querySelectorAll('#reportPage [contenteditable="true"]').forEach(el => {
+    if (el.dataset.saveBound === "true") return;
+    el.dataset.saveBound = "true";
+
+    const debouncedSave = debounce(saveReport, 350);
+    el.addEventListener("input", () => {
+      markReportDirty();
+      debouncedSave();
+    });
+    el.addEventListener("blur", () => saveReport(true));
+  });
+}
+
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = event => {
+      const source = new Image();
+
+      source.onload = () => {
+        const maxSize = 1600;
+        const scale = Math.min(1, maxSize / Math.max(source.width, source.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(source.width * scale));
+        canvas.height = Math.max(1, Math.round(source.height * scale));
+
+        const context = canvas.getContext("2d");
+        context.drawImage(source, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.82));
+      };
+
+      source.onerror = () => reject(new Error("Não foi possível processar a imagem."));
+      source.src = event.target.result;
+    };
+
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function loadImage(input, type) {
+  const file = input.files && input.files[0];
+  if (!file) return;
+
+  try {
+    const compressedImage = await compressImage(file);
+    const card = input.closest("[data-equipment]");
+    const box = card.querySelector(`[data-photo-box="${type}"]`);
+    const img = box.querySelector("img");
+
+    img.src = compressedImage;
+    box.classList.add("has-image");
+    markReportDirty();
+    await saveReport();
+    guideMobileFlow(card, type === "before" ? "after-photo" : "texts");
+  } catch (error) {
+    console.error(error);
+    showSaveStatus("save-error", "Erro na foto");
+  }
+}
+
+function removeImage(button, type) {
+  const card = button.closest("[data-equipment]");
+  const box = card.querySelector(`[data-photo-box="${type}"]`);
+  const img = box.querySelector("img");
+
+  img.removeAttribute("src");
+  box.classList.remove("has-image");
+  markReportDirty();
+  saveReport();
+}
+
+function collectReportData() {
+  const root = document.getElementById("reportPage");
+  const header = {
+    title: root.querySelector(".report-title h1")?.textContent.trim() || "",
+    badge: root.querySelector(".badge")?.textContent.trim() || "",
+    empresa: document.getElementById("empresa")?.textContent.trim() || "",
+    localGeral: document.getElementById("localGeral")?.textContent.trim() || "",
+    dataRelatorio: document.getElementById("dataRelatorio")?.textContent.trim() || "",
+    metaValues: Array.from(root.querySelectorAll(".meta-value")).map(el => el.textContent.trim()),
+    summary: Array.from(root.querySelectorAll(".summary-box span")).map(el => el.textContent.trim()),
+    footer: root.querySelector(".footer-left")?.textContent.trim() || ""
+  };
+
+  const equipment = Array.from(root.querySelectorAll("[data-equipment]")).map(card => {
+    return {
+      title: card.querySelector(".equipment-title")?.textContent.trim() || "",
+      equipmentType: card.querySelector('[data-field="equipmentType"]')?.textContent.trim() || "",
+      location: card.querySelector('[data-field="location"]')?.textContent.trim() || "",
+      area: card.querySelector('[data-field="area"]')?.textContent.trim() || "",
+      ip: card.querySelector('[data-field="ip"]')?.textContent.trim() || "",
+      mac: card.querySelector('[data-field="mac"]')?.textContent.trim() || "",
+      fw: card.querySelector('[data-field="fw"]')?.textContent.trim() || "",
+      codigo: card.querySelector('[data-field="codigo"]')?.textContent.trim() || "",
+      serial: card.querySelector('[data-field="serial"]')?.textContent.trim() || "",
+      date: card.querySelector('[data-field="date"]')?.textContent.trim() || "",
+      service: card.querySelector('[data-field="service"]')?.textContent.trim() || "",
+      status: card.querySelector('[data-field="status"]')?.textContent.trim() || "",
+      notes: card.querySelector('[data-field="notes"]')?.textContent.trim() || "",
+      beforeImage: card.querySelector('[data-photo-box="before"] img')?.getAttribute("src") || "",
+      afterImage: card.querySelector('[data-photo-box="after"] img')?.getAttribute("src") || ""
+    };
+  });
+
+  return {
+    dayKey: currentDayKey,
+    updatedAt: new Date().toISOString(),
+    header,
+    equipment
+  };
+}
+
+function blankReport(dayKey = currentDayKey) {
+  const date = isoToBR(dayKey);
+
+  return {
+    dayKey,
+    updatedAt: new Date().toISOString(),
+    header: {
+      title: "RELATÓRIO FOTOGRÁFICO — MANUTENÇÃO PREVENTIVA DIÁRIA",
+      badge: "DIÁRIO",
+      empresa: "YARA",
+      localGeral: "RIG1",
+      dataRelatorio: date,
+      metaValues: ["YARA", "RIG1", "Manutenção preventiva diária", "Fotográfico técnico", date],
+      summary: [
+        "Registro fotográfico diário das atividades de manutenção preventiva realizadas nos equipamentos listados.",
+        "1",
+        "Concluído"
+      ],
+      footer: ""
+    },
+    equipment: [{
+      ...DEFAULT_EQUIPMENT,
+      date
+    }]
+  };
+}
+
+async function saveDirectReport(data) {
+  data = repairSavedText(data);
+  const dayKey = data.dayKey || brToISO(data.header?.dataRelatorio) || currentDayKey;
+  data.dayKey = dayKey;
+  data.updatedAt = new Date().toISOString();
+  let serverSaved = false;
+
+  try {
+    await apiSaveReport(data);
+    serverSaved = true;
+  } catch (serverError) {
+    console.warn("Servidor não salvou, usando armazenamento local:", serverError);
+  }
+
+  try {
+    await saveToDatabase(data, dayKey);
+  } catch (databaseError) {
+    console.warn("Banco local indisponível:", databaseError);
+
+    try {
+      localStorage.setItem(storageKey(dayKey), JSON.stringify(data));
+      return { photosIncluded: true, serverSaved };
+    } catch (imageStorageError) {
+      localStorage.setItem(storageKey(dayKey), JSON.stringify(withoutImages(data)));
+      return { photosIncluded: false, serverSaved };
+    }
+  }
+
+  try {
+    localStorage.setItem(storageKey(dayKey), JSON.stringify(withoutImages(data)));
+  } catch (error) {
+    console.warn("Cópia leve não salva:", error);
+  }
+
+  return { photosIncluded: true, serverSaved };
+}
+
+async function saveReport(force = false) {
+  if (isLoadingReport || document.body.classList.contains("monthly")) return false;
+  if (!force && !reportDirty) return true;
+
+  const data = collectReportData();
+
+  try {
+    const result = await saveDirectReport(data);
+    reportDirty = false;
+    refreshNumbers();
+    showSaveStatus(result.photosIncluded ? "saved" : "save-error", result.photosIncluded ? "Salvo" : "Textos salvos");
+    await refreshMonthlyUsedDevices();
+    return true;
+  } catch (databaseError) {
+    console.error(databaseError);
+
+    try {
+      let photosIncluded = true;
+
+      try {
+        localStorage.setItem(storageKey(), JSON.stringify(data));
+      } catch (imageStorageError) {
+        photosIncluded = false;
+        localStorage.setItem(storageKey(), JSON.stringify(withoutImages(data)));
+      }
+
+      refreshNumbers();
+      reportDirty = false;
+      showSaveStatus(photosIncluded ? "saved" : "save-error", photosIncluded ? "Salvo" : "Textos salvos");
+      await refreshMonthlyUsedDevices();
+      return true;
+    } catch (storageError) {
+      console.error(storageError);
+      showSaveStatus("save-error", "Erro ao salvar");
+      alert("Não foi possível salvar este dia. Exporte um backup e libere espaço no navegador.");
+      return false;
+    }
+  }
+}
+
+async function getReportByDay(dayKey) {
+  try {
+    const serverReport = await apiLoadReport(dayKey);
+    if (serverReport) return repairSavedText(serverReport);
+  } catch (error) {
+    console.warn("Servidor indisponível para carregar relatório:", error);
+  }
+
+  try {
+    const saved = await loadFromDatabase(dayKey);
+    if (saved) return repairSavedText(saved);
+  } catch (error) {
+    console.warn("Banco local indisponível:", error);
+  }
+
+  const raw = localStorage.getItem(storageKey(dayKey));
+  if (!raw) return null;
+
+  try {
+    return repairSavedText(JSON.parse(raw));
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+async function getAllReports() {
+  const reports = new Map();
+
+  try {
+    const serverReports = await apiLoadReports();
+    serverReports.forEach(report => {
+      if (report?.dayKey) reports.set(report.dayKey, repairSavedText(report));
+    });
+  } catch (error) {
+    console.warn("Servidor indisponível para listar relatórios:", error);
+  }
+
+  try {
+    const databaseReports = await getAllFromDatabase();
+    databaseReports.forEach(report => {
+      if (report?.dayKey) reports.set(report.dayKey, repairSavedText(report));
+    });
+  } catch (error) {
+    console.warn("Banco local indisponível:", error);
+  }
+
+  for (let index = 0; index < localStorage.length; index += 1) {
+    const key = localStorage.key(index);
+    if (!key?.startsWith(STORAGE_PREFIX)) continue;
+
+    try {
+      const report = JSON.parse(localStorage.getItem(key));
+      const dayKey = report.dayKey || key.slice(STORAGE_PREFIX.length);
+      if (!reports.has(dayKey)) reports.set(dayKey, repairSavedText({ ...report, dayKey }));
+    } catch (error) {
+      console.warn("Registro local ignorado:", error);
+    }
+  }
+
+  return Array.from(reports.values()).sort((a, b) => a.dayKey.localeCompare(b.dayKey));
+}
+
+function applyReportData(data, dayKey) {
+  const report = repairSavedText(data || blankReport(dayKey));
+  const root = document.getElementById("reportPage");
+  currentDayKey = dayKey;
+  isLoadingReport = true;
+
+  try {
+    document.getElementById("daySelector").value = dayKey;
+
+    root.querySelector(".report-title h1").textContent = report.header?.title || blankReport(dayKey).header.title;
+    root.querySelector(".badge").textContent = report.header?.badge || "DIÁRIO";
+    root.querySelector(".footer-left").textContent = report.header?.footer || blankReport(dayKey).header.footer;
+
+    const metaValues = root.querySelectorAll(".meta-value");
+    const savedMeta = report.header?.metaValues || blankReport(dayKey).header.metaValues;
+    savedMeta.forEach((value, index) => {
+      if (metaValues[index]) metaValues[index].textContent = value;
+    });
+    if (metaValues[4]) metaValues[4].textContent = isoToBR(dayKey);
+
+    const summaryValues = root.querySelectorAll(".summary-box span");
+    const savedSummary = report.header?.summary || blankReport(dayKey).header.summary;
+    savedSummary.forEach((value, index) => {
+      if (summaryValues[index] && index !== 1) summaryValues[index].textContent = value;
+    });
+
+    const list = document.getElementById("equipmentList");
+    list.innerHTML = "";
+    const equipment = Array.isArray(report.equipment) && report.equipment.length
+      ? report.equipment
+      : blankReport(dayKey).equipment;
+    equipment.forEach(item => addEquipment(item));
+  } finally {
+    isLoadingReport = false;
+  }
+
+  bindCardEvents();
+  refreshNumbers();
+  reportDirty = false;
+}
+
+async function loadDay(dayKey) {
+  const data = await getReportByDay(dayKey);
+  applyReportData(data || blankReport(dayKey), dayKey);
+  await refreshMonthlyUsedDevices();
+}
+
+async function openSelectedDay() {
+  const selected = document.getElementById("daySelector").value;
+  if (!selected || selected === currentDayKey) return;
+
+  await saveCurrentIfDirty();
+  await loadDay(selected);
+  setMode("edit");
+}
+
+async function createNewDay() {
+  const typedDate = prompt("Digite a data do novo dia:", todayBR());
+  if (typedDate === null) return;
+
+  const dayKey = brToISO(typedDate.trim());
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dayKey)) {
+    alert("Use a data no formato DD/MM/AAAA.");
+    return;
+  }
+
+  await saveCurrentIfDirty();
+  const existing = await getReportByDay(dayKey);
+
+  if (existing && !confirm(`O dia ${isoToBR(dayKey)} já existe. Deseja abri-lo?`)) return;
+
+  applyReportData(existing || blankReport(dayKey), dayKey);
+  if (!existing) await saveReport(true);
+  setMode("edit");
+}
+
+function updateReportDate(report, dayKey) {
+  const copy = JSON.parse(JSON.stringify(report));
+  const date = isoToBR(dayKey);
+  copy.dayKey = dayKey;
+  copy.updatedAt = new Date().toISOString();
+  copy.header.dataRelatorio = date;
+  copy.header.metaValues[4] = date;
+  copy.equipment.forEach(item => {
+    item.date = date;
+  });
+  return copy;
+}
+
+async function duplicateDay(dayKey = currentDayKey) {
+  const source = await getReportByDay(dayKey);
+  if (!source) return;
+
+  const typedDate = prompt("Digite a data para a cópia:", todayBR());
+  if (typedDate === null) return;
+
+  const targetDay = brToISO(typedDate.trim());
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDay)) {
+    alert("Use a data no formato DD/MM/AAAA.");
+    return;
+  }
+
+  if (await getReportByDay(targetDay)) {
+    alert("Essa data já possui um relatório.");
+    return;
+  }
+
+  const copy = updateReportDate(source, targetDay);
+  await saveDirectReport(copy);
+  closeHistory();
+  applyReportData(copy, targetDay);
+  setMode("edit");
+}
+
+async function showHistory(skipCurrentSave = false) {
+  if (!skipCurrentSave) await saveCurrentIfDirty();
+  const reports = (await getAllReports()).reverse();
+  const list = document.getElementById("historyList");
+
+  list.innerHTML = reports.length
+    ? reports.map(report => `
+        <div class="history-row">
+          <div class="history-info">
+            <strong>${escapeHtml(isoToBR(report.dayKey))}</strong>
+            <span>${report.equipment?.length || 0} equipamento(s)</span>
+          </div>
+          <div class="history-actions">
+            <button onclick="openHistoryDay('${report.dayKey}')">Abrir</button>
+            <button onclick="duplicateDay('${report.dayKey}')">Duplicar</button>
+            <button onclick="printDay('${report.dayKey}')">Imprimir</button>
+            <button class="red" onclick="deleteStoredDay('${report.dayKey}')">Excluir</button>
+          </div>
+        </div>
+      `).join("")
+    : `<div class="empty-history">Nenhum dia salvo.</div>`;
+
+  document.getElementById("historyPanel").classList.add("open");
+}
+
+function closeHistory() {
+  document.getElementById("historyPanel").classList.remove("open");
+}
+
+function filteredDevices() {
+  const search = normalizeSearch(document.getElementById("deviceSearchInput")?.value || "");
+  const filter = document.getElementById("deviceStatusFilter")?.value || "";
+
+  return getDevices().filter(device => {
+    const matchesSearch = !search || deviceSearchText(device).includes(search);
+    let matchesFilter = true;
+
+    if (filter === "SEM_MAC") {
+      matchesFilter = !device.mac || device.mac === "SEM_MAC";
+    } else if (filter === "Vinculado") {
+      matchesFilter = device.statusVinculo === "Vinculado";
+    } else if (filter === "Sem vínculo modelo/código") {
+      matchesFilter = device.statusVinculo !== "Vinculado";
+    } else if (filter) {
+      matchesFilter = device.statusRede === filter;
+    }
+
+    return matchesSearch && matchesFilter;
+  });
+}
+
+function renderDeviceStats(devices, visibleDevices) {
+  const stats = [
+    ["Total", devices.length],
+    ["Visiveis", visibleDevices.length],
+    ["Online", devices.filter(device => device.statusRede === "Online").length],
+    ["Offline", devices.filter(device => device.statusRede === "Offline").length],
+    ["Sem MAC", devices.filter(device => !device.mac || device.mac === "SEM_MAC").length],
+    ["Vinculados", devices.filter(device => device.statusVinculo === "Vinculado").length]
+  ];
+
+  document.getElementById("deviceStats").innerHTML = stats.map(([label, value]) => `
+    <div class="data-stat">
+      <strong>${value}</strong>
+      <span>${escapeHtml(label)}</span>
+    </div>
+  `).join("");
+}
+
+function renderSavedData() {
+  const devices = getDevices();
+  const visibleDevices = filteredDevices();
+  renderDeviceStats(devices, visibleDevices);
+
+  const list = document.getElementById("savedDataList");
+  list.innerHTML = visibleDevices.length
+    ? visibleDevices.map(device => {
+        const statusClass = device.statusRede === "Offline" ? "data-status offline" : "data-status";
+        return `
+          <tr>
+            <td><span class="${statusClass}">${escapeHtml(device.statusRede || "-")}</span></td>
+            <td>${escapeHtml(device.area || "-")}</td>
+            <td><strong>${escapeHtml(device.name || "-")}</strong><br>${escapeHtml(device.localOficial || "")}<br>${escapeHtml(device.ip || "-")}</td>
+            <td>${escapeHtml(device.mac || "-")}</td>
+            <td>${escapeHtml(device.modelo || device.tipo || "-")}<br>${escapeHtml(device.fw || "")}</td>
+            <td>${escapeHtml(device.codigo || "-")}<br>${escapeHtml(device.serial || "")}</td>
+            <td>
+              <button onclick="useSavedDevice('${escapeHtml(device.ip)}')">Usar</button>
+              <button class="secondary" onclick="editDevice('${escapeHtml(device.ip)}')">Editar</button>
+              <button class="red" onclick="deleteDevice('${escapeHtml(device.ip)}')">Excluir</button>
+            </td>
+          </tr>
+        `;
+      }).join("")
+    : `<tr><td colspan="7" class="empty-history">Nenhum equipamento encontrado.</td></tr>`;
+}
+
+function showSavedData() {
+  closeHistory();
+  renderSavedData();
+  document.getElementById("savedDataPanel").classList.add("open");
+}
+
+function closeSavedData() {
+  document.getElementById("savedDataPanel").classList.remove("open");
+}
+
+function fillDeviceForm(device = {}) {
+  document.getElementById("deviceOriginalIp").value = device.ip || "";
+  document.getElementById("deviceStatusRede").value = device.statusRede || "Online";
+  document.getElementById("deviceArea").value = device.area || "";
+  document.getElementById("deviceName").value = device.name || "";
+  document.getElementById("deviceLocalOficial").value = device.localOficial || "";
+  document.getElementById("deviceIp").value = device.ip || "";
+  document.getElementById("deviceMac").value = device.mac || "";
+  document.getElementById("deviceTipo").value = device.tipo || "";
+  document.getElementById("deviceModelo").value = device.modelo || "";
+  document.getElementById("deviceFw").value = device.fw || "";
+  document.getElementById("deviceCodigo").value = device.codigo || "";
+  document.getElementById("deviceSerial").value = device.serial || "";
+  document.getElementById("deviceStatusVinculo").value = device.statusVinculo || "";
+  document.getElementById("deviceObservacao").value = device.observacao || "";
+}
+
+function readDeviceForm() {
+  return normalizeDevice({
+    statusRede: document.getElementById("deviceStatusRede").value,
+    area: document.getElementById("deviceArea").value.trim(),
+    name: document.getElementById("deviceName").value.trim(),
+    localOficial: document.getElementById("deviceLocalOficial").value.trim(),
+    ip: document.getElementById("deviceIp").value.trim(),
+    mac: document.getElementById("deviceMac").value.trim(),
+    tipo: document.getElementById("deviceTipo").value.trim(),
+    modelo: document.getElementById("deviceModelo").value.trim(),
+    fw: document.getElementById("deviceFw").value.trim(),
+    codigo: document.getElementById("deviceCodigo").value.trim(),
+    serial: document.getElementById("deviceSerial").value.trim(),
+    statusVinculo: document.getElementById("deviceStatusVinculo").value.trim(),
+    observacao: document.getElementById("deviceObservacao").value.trim()
+  });
+}
+
+function clearDeviceForm() {
+  fillDeviceForm({
+    statusRede: "Online",
+    statusVinculo: "Sem vínculo modelo/código"
+  });
+}
+
+function startNewDevice() {
+  clearDeviceForm();
+  document.getElementById("deviceName").focus();
+}
+
+function editDevice(ip) {
+  const device = findDeviceByIp(ip);
+  if (!device) return;
+  fillDeviceForm(device);
+}
+
+function saveDeviceForm(event) {
+  event.preventDefault();
+
+  const originalIp = document.getElementById("deviceOriginalIp").value.trim();
+  const device = readDeviceForm();
+
+  if (!device.name || !device.ip) {
+    alert("Informe pelo menos nome e IP.");
+    return;
+  }
+
+  const devices = getDevices();
+  const newRefs = new Set(deviceIdentityRefs(device));
+  const duplicated = devices.some(item => {
+    if (originalIp && item.ip === originalIp) return false;
+    return deviceIdentityRefs(item).some(ref => newRefs.has(ref));
+  });
+  if (duplicated) {
+    alert("Ja existe um equipamento com esse nome, IP ou MAC.");
+    return;
+  }
+
+  const existing = devices.find(item => item.ip === originalIp);
+  const maxNumber = devices.reduce((max, item) => Math.max(max, Number(item.number) || 0), 0);
+  device.number = existing?.number || maxNumber + 1;
+
+  const nextDevices = existing
+    ? devices.map(item => item.ip === originalIp ? device : item)
+    : [...devices, device];
+
+  saveDeviceData(nextDevices);
+  fillDeviceForm(device);
+  renderSavedData();
+}
+
+function deleteDevice(ip) {
+  const device = findDeviceByIp(ip);
+  if (!device) return;
+  if (!confirm(`Excluir ${device.name || device.ip} do cadastro?`)) return;
+
+  const nextDevices = getDevices().filter(item => item.ip !== ip);
+  saveDeviceData(nextDevices);
+  clearDeviceForm();
+  renderSavedData();
+}
+
+function deleteDeviceFromForm() {
+  const ip = document.getElementById("deviceOriginalIp").value.trim() || document.getElementById("deviceIp").value.trim();
+  if (ip) deleteDevice(ip);
+}
+
+function useSavedDevice(ip) {
+  const device = findDeviceByIp(ip);
+  if (!device) return;
+
+  closeSavedData();
+  setMode("edit");
+  addEquipment(deviceToEquipment(device));
+}
+
+function exportDevices() {
+  const backup = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    devices: getDevices()
+  };
+  const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `dados-salvos-rig1-${todayISO()}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function importDevices(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const backup = JSON.parse(await file.text());
+    const devices = Array.isArray(backup) ? backup : backup.devices;
+    if (!Array.isArray(devices) || !devices.length) throw new Error("Cadastro vazio ou invalido.");
+    if (!confirm(`Importar ${devices.length} equipamento(s)? O cadastro atual sera substituido.`)) return;
+
+    saveDeviceData(devices);
+    clearDeviceForm();
+    renderSavedData();
+    alert("Dados importados.");
+  } catch (error) {
+    console.error(error);
+    alert("Nao foi possivel importar esse cadastro.");
+  } finally {
+    input.value = "";
+  }
+}
+
+function resetDeviceData() {
+  if (!confirm("Restaurar os 72 equipamentos originais da planilha?")) return;
+
+  localStorage.removeItem(DEVICE_STORE_KEY);
+  refreshDeviceSelectors();
+  clearDeviceForm();
+  renderSavedData();
+}
+
+async function openHistoryDay(dayKey) {
+  await saveCurrentIfDirty();
+  closeHistory();
+  await loadDay(dayKey);
+  setMode("edit");
+}
+
+async function deleteStoredDay(dayKey) {
+  if (!confirm(`Excluir completamente o dia ${isoToBR(dayKey)}?`)) return;
+
+  try {
+    await apiDeleteReport(dayKey);
+  } catch (error) {
+    console.warn("Servidor indisponível para excluir relatório:", error);
+  }
+
+  try {
+    await deleteFromDatabase(dayKey);
+  } catch (error) {
+    console.warn("Banco local indisponível:", error);
+  }
+  localStorage.removeItem(storageKey(dayKey));
+
+  if (dayKey === currentDayKey) {
+    const remaining = await getAllReports();
+    const nextReport = remaining[remaining.length - 1];
+    if (nextReport) {
+      applyReportData(nextReport, nextReport.dayKey);
+    } else {
+      const nextDay = todayISO();
+      applyReportData(blankReport(nextDay), nextDay);
+    }
+    await showHistory(true);
+    return;
+  }
+
+  await showHistory();
+}
+
+async function deleteCurrentDay() {
+  await deleteStoredDay(currentDayKey);
+  closeHistory();
+}
+
+function readOnlyEquipmentTemplate(item, index) {
+  return equipmentTemplate(item, index)
+    .replaceAll('contenteditable="true"', "")
+    .replace("data-equipment", "data-monthly-equipment");
+}
+
+function monthlyDayTemplate(report) {
+  const header = report.header || blankReport(report.dayKey).header;
+  const meta = header.metaValues || [];
+  const summary = header.summary || [];
+  const equipment = report.equipment || [];
+
+  return `
+    <main class="report-page">
+      <div class="report-inner">
+        <section class="report-top">
+          <div class="report-title">
+            <h1>${escapeHtml(header.title || "RELATÓRIO FOTOGRÁFICO — MANUTENÇÃO PREVENTIVA DIÁRIA")}</h1>
+            <div class="badge">${escapeHtml(isoToBR(report.dayKey))}</div>
+          </div>
+          <div class="report-meta">
+            ${["Empresa", "Local geral", "Tipo de serviço", "Relatório", "Data"].map((label, index) => `
+              <div class="meta-box">
+                <div class="meta-label">${label}</div>
+                <div class="meta-value">${escapeHtml(index === 4 ? isoToBR(report.dayKey) : meta[index] || "")}</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="report-summary">
+            <div class="summary-box"><strong>Descrição geral</strong><span>${escapeHtml(summary[0] || "")}</span></div>
+            <div class="summary-box"><strong>Total de equipamentos</strong><span>${equipment.length}</span></div>
+            <div class="summary-box"><strong>Status geral</strong><span>${escapeHtml(summary[2] || "Concluído")}</span></div>
+          </div>
+        </section>
+        <section class="equipment-list">
+          ${equipment.map((item, index) => readOnlyEquipmentTemplate(item, index)).join("")}
+        </section>
+        <footer class="report-footer">
+          <div class="footer-left">${escapeHtml(header.footer || "")}</div>
+          <div class="footer-page">${escapeHtml(isoToBR(report.dayKey))}</div>
+        </footer>
+      </div>
+    </main>
+  `;
+}
+
+
+function splitIntoPages(items, itemsPerPage = 2) {
+  const pages = [];
+  for (let index = 0; index < items.length; index += itemsPerPage) {
+    pages.push(items.slice(index, index + itemsPerPage));
+  }
+  return pages.length ? pages : [[]];
+}
+
+function printHeaderBadge(report, header) {
+  const badge = String(header?.badge || "").trim();
+  if (badge && !/^di[aá]rio$/i.test(badge)) return badge;
+  return isoToBR(report.dayKey || currentDayKey);
+}
+
+function repeatedHeaderPageTemplate(report, pageItems, pageIndex, totalPages) {
+  const header = report.header || blankReport(report.dayKey).header;
+  const meta = header.metaValues || [];
+  const summary = header.summary || [];
+  const totalEquipment = report.equipment?.length || 0;
+  const startIndex = pageIndex * 2;
+
+  return `
+    <main class="report-page">
+      <div class="report-inner">
+        <section class="report-top">
+          <div class="report-title">
+            <h1>${escapeHtml(header.title || "RELATÓRIO FOTOGRÁFICO — MANUTENÇÃO PREVENTIVA DIÁRIA")}</h1>
+            <div class="badge">${escapeHtml(printHeaderBadge(report, header))}</div>
+          </div>
+          <div class="report-meta">
+            ${["Empresa", "Local geral", "Tipo de serviço", "Relatório", "Data"].map((label, index) => `
+              <div class="meta-box">
+                <div class="meta-label">${label}</div>
+                <div class="meta-value">${escapeHtml(index === 4 ? isoToBR(report.dayKey) : meta[index] || "")}</div>
+              </div>
+            `).join("")}
+          </div>
+          <div class="report-summary">
+            <div class="summary-box"><strong>Descrição geral</strong><span>${escapeHtml(summary[0] || "")}</span></div>
+            <div class="summary-box"><strong>Total de equipamentos</strong><span>${totalEquipment}</span></div>
+            <div class="summary-box"><strong>Status geral</strong><span>${escapeHtml(summary[2] || "Concluído")}</span></div>
+          </div>
+        </section>
+        <section class="equipment-list">
+          ${pageItems.map((item, index) => readOnlyEquipmentTemplate(item, startIndex + index)).join("")}
+        </section>
+        <footer class="report-footer">
+          <div class="footer-left">${escapeHtml(header.footer || "")}</div>
+          <div class="footer-page">Página ${pageIndex + 1} de ${totalPages}</div>
+        </footer>
+      </div>
+    </main>
+  `;
+}
+
+function monthlyReportPagesTemplate(report) {
+  const pages = splitIntoPages(report.equipment || [], 2);
+  return pages
+    .map((pageItems, index) => repeatedHeaderPageTemplate(report, pageItems, index, pages.length))
+    .join("");
+}
+
+function renderPrintPages() {
+  const output = document.getElementById("printOutput");
+  if (!output) return;
+
+  const report = collectReportData();
+  const pages = splitIntoPages(report.equipment || [], 2);
+  output.innerHTML = pages
+    .map((pageItems, index) => repeatedHeaderPageTemplate(report, pageItems, index, pages.length))
+    .join("");
+
+  applyPrintVisibility();
+}
+
+async function showMonthlyReport() {
+  await saveReport(true);
+
+  const typedMonth = prompt("Digite o mês no formato AAAA-MM:", currentDayKey.slice(0, 7));
+  if (typedMonth === null) return;
+
+  const monthKey = typedMonth.trim();
+  if (!/^\d{4}-\d{2}$/.test(monthKey)) {
+    alert("Use o formato AAAA-MM.");
+    return;
+  }
+
+  const reports = (await getAllReports()).filter(report => report.dayKey.startsWith(monthKey));
+  if (!reports.length) {
+    alert("Nenhum relatório salvo nesse mês.");
+    return;
+  }
+
+  const totalEquipment = reports.reduce((total, report) => total + (report.equipment?.length || 0), 0);
+  const totalPhotos = reports.reduce((total, report) => total + (report.equipment || []).reduce((count, item) => (
+    count + (item.beforeImage ? 1 : 0) + (item.afterImage ? 1 : 0)
+  ), 0), 0);
+
+  document.getElementById("monthlyOutput").innerHTML = `
+    <main class="report-page monthly-cover">
+      <div class="report-inner">
+        <div class="monthly-cover-box">
+          <div class="monthly-cover-title">
+            <h1>RELATÓRIO FOTOGRÁFICO MENSAL</h1>
+            <strong>YARA — ${escapeHtml(monthName(monthKey).toUpperCase())}</strong>
+          </div>
+          <div class="monthly-stats">
+            <div class="monthly-stat"><strong>${reports.length}</strong><span>Dias registrados</span></div>
+            <div class="monthly-stat"><strong>${totalEquipment}</strong><span>Equipamentos</span></div>
+            <div class="monthly-stat"><strong>${totalPhotos}</strong><span>Fotos</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    ${reports.map(monthlyReportPagesTemplate).join("")}
+  `;
+
+  applyPrintVisibility();
+  document.body.className = "monthly";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function closeMonthlyReport() {
+  document.body.className = "edit";
+  document.getElementById("monthlyOutput").innerHTML = "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function exportBackup() {
+  await saveReport(true);
+  const reports = await getAllReports();
+  const backup = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    devices: getDevices(),
+    reports
+  };
+  const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `backup-relatorio-yara-${todayISO()}.json`;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+async function importBackup(input) {
+  const file = input.files?.[0];
+  if (!file) return;
+
+  try {
+    const backup = JSON.parse(await file.text());
+    const reports = Array.isArray(backup) ? backup : backup.reports;
+    if (!Array.isArray(reports) || !reports.length) throw new Error("Backup vazio ou inválido.");
+    if (!confirm(`Importar ${reports.length} dia(s) do backup? Dias com a mesma data serão substituídos.`)) return;
+
+    if (!Array.isArray(backup) && Array.isArray(backup.devices)) {
+      saveDeviceData(backup.devices);
+    }
+
+    for (const report of reports) {
+      if (!report?.dayKey || !report?.header || !Array.isArray(report.equipment)) continue;
+      await saveDirectReport(report);
+    }
+
+    alert("Backup importado.");
+    await loadDay(currentDayKey);
+  } catch (error) {
+    console.error(error);
+    alert("Não foi possível importar esse backup.");
+  } finally {
+    input.value = "";
+  }
+}
+
+async function showCleanReport() {
+  await saveReport(true);
+  setMode("show");
+}
+
+function setMode(mode) {
+  if (mode === "show") {
+    renderPrintPages();
+  } else {
+    const output = document.getElementById("printOutput");
+    if (output) output.innerHTML = "";
+  }
+
+  document.body.classList.remove("edit", "show", "monthly");
+  document.body.classList.add(mode);
+
+  if (mode === "show") saveReport(true);
+}
+
+async function generatePDF() {
+  await saveReport(true);
+  setMode("show");
+  setTimeout(() => window.print(), 250);
+}
+
+async function printDay(dayKey) {
+  await saveCurrentIfDirty();
+  closeHistory();
+  await loadDay(dayKey);
+  await generatePDF();
+}
+
+function debounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    if (document.body.classList.contains("monthly")) {
+      closeMonthlyReport();
+    } else if (document.getElementById("savedDataPanel").classList.contains("open")) {
+      closeSavedData();
+    } else if (document.getElementById("historyPanel").classList.contains("open")) {
+      closeHistory();
+    } else {
+      setMode("edit");
+    }
+  }
+
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+    event.preventDefault();
+    saveReport(true);
+  }
+});
+
+window.addEventListener("beforeunload", () => saveReport(true));
+
+(async function initializeReport() {
+  initializePrintVisibilityControls();
+  await initializeDeviceBase();
+  updateSameDayDuplicatesButton();
+  document.getElementById("daySelector").value = currentDayKey;
+  await loadDay(currentDayKey);
+  bindCardEvents();
+  refreshNumbers();
+})();
+</script>
+
+</body>
+</html>
