@@ -820,6 +820,10 @@ body {
   box-shadow: 0 8px 20px rgba(7, 60, 55, .08);
 }
 
+.equipment-card.filtered-out {
+  display: none;
+}
+
 .equipment-head {
   background: linear-gradient(110deg, #073c37 0%, #007864 100%);
   border-left: 6px solid #007864;
@@ -4003,6 +4007,7 @@ async function refreshMonthlyUsedDevices(refreshSelectors = true) {
   }
 
   if (refreshSelectors) refreshDeviceSelectors();
+  applyDeviceFilter();
 }
 
 function updateSameDayDuplicatesButton() {
@@ -4019,6 +4024,18 @@ function toggleSameDayDuplicates() {
   localStorage.setItem(SAME_DAY_DUPLICATES_STORE_KEY, allowSameDayDuplicates ? "true" : "false");
   updateSameDayDuplicatesButton();
   refreshDeviceSelectors();
+  applyDeviceFilter();
+}
+
+function applyDeviceFilter() {
+  document.querySelectorAll('#equipmentList [data-equipment]').forEach(card => {
+    const ip = card.querySelector('[data-field="ip"]')?.textContent.trim() || '';
+    const location = card.querySelector('[data-field="location"]')?.textContent.trim() || '';
+    const name = card.querySelector('.equipment-title')?.textContent.trim() || '';
+    const key = deviceUsageKeyFromParts({ ip, location, name });
+    const hide = !allowSameDayDuplicates && key && monthlyUsedDeviceIps.has(key);
+    card.classList.toggle('filtered-out', hide);
+  });
 }
 
 function buildDeviceOptions(selectedLocation, selectedIp = "", searchText = "") {
