@@ -10,7 +10,7 @@ fi
 
 if [ -z "$(ls -A /app/data/images/ 2>/dev/null)" ]; then
     echo "[entrypoint] imagens vazias, copiando do stock..."
-    cp -r /app/data-stock/* /app/data/
+    cp -r /app/data-stock/images/. /app/data/images/
 fi
 
 echo "[entrypoint] iniciando servidor..."
