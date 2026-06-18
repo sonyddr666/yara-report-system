@@ -10,11 +10,28 @@ Sistema de relatório fotográfico de manutenção preventiva. Backend Python + 
 
 No Coolify, dentro do serviço, vá em **Storages → + Add**:
 
+#### Volume Mount (recomendado)
+
+O Docker gerencia o volume, não precisa criar pasta no servidor:
+
 | Campo | Valor |
 |---|---|
-| Type | Volume |
-| Name | yara_data |
-| Destination Path | /app/data |
+| Name | `yara_data` |
+| Destination Path | `/app/data` |
+
+*(Source Path: deixar vazio)*
+
+#### Bind Mount (alternativo)
+
+Se quiser acessar os arquivos direto pelo servidor em `/data/yara`:
+
+| Campo | Valor |
+|---|---|
+| Name | `yara_data` |
+| Source Path | `/data/yara` |
+| Destination Path | `/app/data` |
+
+*(Antes do deploy, criar a pasta no servidor: `mkdir -p /data/yara/images && touch /data/yara/database.db && chmod -R 777 /data/yara`)*
 
 ### 2. Fazer deploy
 
