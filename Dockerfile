@@ -5,7 +5,6 @@ WORKDIR /app
 COPY server.py .
 COPY schema.sql .
 COPY index.html .
-COPY app/ app/
 COPY tools/ tools/
 
 RUN mkdir -p data/images
