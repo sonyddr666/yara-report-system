@@ -6,8 +6,14 @@ COPY server.py .
 COPY schema.sql .
 COPY index.html .
 COPY tools/ tools/
+COPY entrypoint.sh .
 
-RUN mkdir -p data/images
+RUN chmod +x entrypoint.sh
+
+RUN mkdir -p data/images db-stock data-stock
+
+COPY database.db /app/db-stock/database.db
+COPY data/ /app/data-stock/
 
 EXPOSE 8880
 ENV HOST=0.0.0.0
@@ -15,4 +21,4 @@ ENV PORT=8880
 
 VOLUME ["/app/data", "/app/database.db"]
 
-CMD ["python", "server.py"]
+ENTRYPOINT ["/app/entrypoint.sh"]
