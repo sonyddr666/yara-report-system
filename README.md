@@ -1,27 +1,56 @@
 # YARA Report System
 
-Sistema novo em Python + SQLite para relatórios fotográficos.
+Sistema de relatório fotográfico de manutenção preventiva. Backend Python + SQLite, frontend HTML puro.
 
-Este projeto **não muda a interface nem o modelo de impressão**. O servidor novo entrega o `index.html` preservado no próprio projeto e mantém as rotas antigas (`/api/report`, `/api/reports`) para a página continuar funcionando no mesmo padrão visual.
+## Primeiro deploy no Coolify
 
-## Rodar
+### 1. Configurar Storage ANTES do deploy
 
-```bash
-python server.py
+**Obrigatório.** Se pular este passo, todos os dados (banco + imagens) serão perdidos no primeiro redeploy.
+
+No Coolify, dentro do serviço, vá em **Storages → + Add**:
+
+| Campo | Valor |
+|---|---|
+| Type | Volume |
+| Name | yara_data |
+| Destination Path | /app/data |
+
+### 2. Fazer deploy
+
+Clicar **Deploy**. Na primeira subida o entrypoint detecta que o volume está vazio e copia automaticamente:
+
+- Banco de dados (`database.db`) com 72 equipamentos e relatórios
+- 77 imagens em `data/images/`
+
+### 3. Usar normalmente
+
+Salvar relatórios, adicionar equipamentos, etc.
+
+## Redeploy / Force Redeploy
+
+**Seguro** se o storage foi configurado no passo 1. O volume persiste entre deploys. O entrypoint detecta que já existe dado e não sobrescreve nada.
+
+## Estrutura
+
+```
+/app/
+├── server.py          # backend Python (porta 8880)
+├── schema.sql         # schema SQLite
+├── index.html         # frontend
+├── entrypoint.sh      # script de inicialização (seed automático)
+├── tools/             # scripts auxiliares
+└── data/              # volume persistente
+    ├── database.db    # banco SQLite
+    └── images/        # fotos dos relatórios
 ```
 
-Abra `http://127.0.0.1:8890`.
+## Porta
 
-## Importar JSONs antigos
+8880
 
-```bash
-python tools/import_old_reports.py "../data/reports" --old-data-dir "../data"
-```
+## ATENÇÃO
 
-## Como as imagens são salvas
-
-- O banco guarda apenas caminho e hash.
-- As imagens ficam em `data/images/YYYY-MM-DD/`.
-- SHA256 evita salvar imagem exatamente igual mais de uma vez.
-- JSON antigo com base64 é aceito pelo importador e convertido para arquivo real.
-- Ao carregar o relatório, a página recebe URLs leves (`/images/...`) em vez de base64 gigante.
+- Sempre configure o Storage do Coolify antes do primeiro deploy.
+- Nunca use `docker compose down -v` no servidor (apaga o volume).
+- Force Redeploy no Coolify **não** apaga o volume se ele foi configurado via Storages.
