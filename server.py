@@ -519,7 +519,7 @@ class SiteHandler(SimpleHTTPRequestHandler):
 
 def main() -> None:
     init_db()
-    port = int(os.environ.get("PORT", "8890"))
+    port = int(os.environ.get("PORT", "8880"))
     host = os.environ.get("HOST", "127.0.0.1")
     server = ThreadingHTTPServer((host, port), SiteHandler)
     print(f"YARA report system novo em http://{host}:{port}", flush=True)

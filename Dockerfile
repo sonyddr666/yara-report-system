@@ -10,9 +10,9 @@ COPY tools/ tools/
 
 RUN mkdir -p data/images
 
-EXPOSE 8890
+EXPOSE 8880
 ENV HOST=0.0.0.0
-ENV PORT=8890
+ENV PORT=8880
 
 VOLUME ["/app/data", "/app/database.db"]
 
