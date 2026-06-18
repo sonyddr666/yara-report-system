@@ -1,0 +1,16 @@
+services:
+  yara-report:
+    build: .
+    ports:
+      - "8890:8890"
+    volumes:
+      - yara_data:/app/data
+      - yara_db:/app/database.db
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8890
+    restart: unless-stopped
+
+volumes:
+  yara_data:
+  yara_db:
