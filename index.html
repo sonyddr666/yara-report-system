@@ -4042,13 +4042,18 @@ function toggleSameDayDuplicates() {
 
 function applyDeviceFilter() {
   document.querySelectorAll('#equipmentList [data-equipment]').forEach(card => {
-    const ip = card.querySelector('[data-field="ip"]')?.textContent.trim() || '';
-    const location = card.querySelector('[data-field="location"]')?.textContent.trim() || '';
-    const name = card.querySelector('.equipment-title')?.textContent.trim() || '';
-    const key = deviceUsageKeyFromParts({ ip, location, name });
-    const hide = !allowSameDayDuplicates && key && monthlyUsedDeviceIps.has(key);
-    card.classList.toggle('filtered-out', hide);
+    card.classList.remove('filtered-out');
   });
+}
+
+function currentPageUsageKeys() {
+  return new Set(Array.from(document.querySelectorAll('#reportPage [data-equipment]'))
+    .map(card => deviceUsageKeyFromParts({
+      ip: card.querySelector('[data-field="ip"]')?.textContent.trim() || '',
+      location: card.querySelector('[data-field="location"]')?.textContent.trim() || '',
+      name: card.querySelector('.equipment-title')?.textContent.trim() || ''
+    }))
+    .filter(Boolean));
 }
 
 function sortedDevices() {
@@ -4065,6 +4070,7 @@ function buildDeviceFilter(selectedLocation, selectedIp = "", searchText = "") {
   const search = normalizeSearch(searchText);
   const devices = sortedDevices();
   const usedKeys = monthlyUsedDeviceIps;
+  const sameDayKeys = currentPageUsageKeys();
   const listedKeys = new Set();
   const total = devices.length;
   const used = devices.filter(device => {
@@ -4078,7 +4084,8 @@ function buildDeviceFilter(selectedLocation, selectedIp = "", searchText = "") {
     const isSelected = device.ip === selectedIp || (!selectedIp && [device.name, device.localOficial].includes(selectedLocation));
     const usageKey = deviceUsageKey(device);
     const isUsed = usageKey && usedKeys.has(usageKey);
-    if (!isSelected && !allowSameDayDuplicates && isUsed) return;
+    const isSameDayRepeat = usageKey && sameDayKeys.has(usageKey);
+    if (!isSelected && !allowSameDayDuplicates && isUsed && !isSameDayRepeat) return;
     if (!isSelected && usageKey && listedKeys.has(usageKey)) return;
 
     const optionText = normalizeSearch(`${device.name || ""} ${device.ip || ""} ${device.mac || ""} ${device.area || ""} ${device.modelo || ""} ${device.codigo || ""}`);
