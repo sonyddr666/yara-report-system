@@ -4629,7 +4629,11 @@ async function saveDirectReport(data) {
   data.dayKey = dayKey;
   data.updatedAt = new Date().toISOString();
 
-  localStorage.setItem(storageKey(dayKey), JSON.stringify(data));
+  try {
+    localStorage.setItem(storageKey(dayKey), JSON.stringify(data));
+  } catch (imageStorageError) {
+    localStorage.setItem(storageKey(dayKey), JSON.stringify(withoutImages(data)));
+  }
 
   let serverSaved = false;
 
@@ -4644,12 +4648,6 @@ async function saveDirectReport(data) {
     await saveToDatabase(data, dayKey);
   } catch (databaseError) {
     console.warn("Banco local indisponível:", databaseError);
-  }
-
-  try {
-    localStorage.setItem(storageKey(dayKey), JSON.stringify(withoutImages(data)));
-  } catch (error) {
-    console.warn("Cópia leve não salva:", error);
   }
 
   return { photosIncluded: true, serverSaved };
@@ -4671,10 +4669,11 @@ async function saveReport(force = false) {
 }
 
 async function getReportByDay(dayKey) {
+  let localReport = null;
   const raw = localStorage.getItem(storageKey(dayKey));
   if (raw) {
     try {
-      return repairSavedText(JSON.parse(raw));
+      localReport = repairSavedText(JSON.parse(raw));
     } catch (error) {
       console.warn("Registro local corrompido:", error);
     }
@@ -4682,10 +4681,18 @@ async function getReportByDay(dayKey) {
 
   try {
     const serverReport = await apiLoadReport(dayKey);
-    if (serverReport) return repairSavedText(serverReport);
+    if (serverReport) {
+      const fixedServerReport = repairSavedText(serverReport);
+      if (localReport && reportImageCount(localReport) > reportImageCount(fixedServerReport)) {
+        return localReport;
+      }
+      return fixedServerReport;
+    }
   } catch (error) {
     console.warn("Servidor indisponível para carregar relatório:", error);
   }
+
+  if (localReport) return localReport;
 
   try {
     const saved = await loadFromDatabase(dayKey);
@@ -4695,6 +4702,12 @@ async function getReportByDay(dayKey) {
   }
 
   return null;
+}
+
+function reportImageCount(report) {
+  return (report?.equipment || []).reduce((total, item) => {
+    return total + Number(Boolean(item.beforeImage)) + Number(Boolean(item.afterImage));
+  }, 0);
 }
 
 async function getAllReports() {
