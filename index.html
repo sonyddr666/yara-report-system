@@ -1333,6 +1333,17 @@ body.monthly [contenteditable="true"] {
   grid-column: 2 / 5;
 }
 
+.device-filter-summary {
+  grid-column: 1 / -1;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.device-filter-summary strong {
+  color: #073c37;
+}
+
 @media screen and (max-width: 900px) {
   body {
     overflow-x: hidden;
@@ -3723,8 +3734,10 @@ function refreshDeviceSelectors() {
     const currentLocation = card?.querySelector('[data-field="location"]')?.textContent.trim() || "";
     const currentIp = card?.querySelector('[data-field="ip"]')?.textContent.trim() || "";
     const search = card?.querySelector("[data-device-search]")?.value || "";
+    const filter = buildDeviceFilter(currentLocation, currentIp, search);
 
-    select.innerHTML = buildDeviceOptions(currentLocation, currentIp, search);
+    select.innerHTML = buildDeviceOptions(filter);
+    updateDeviceFilterSummary(card, filter);
     updateCardDeviceDetails(card);
   });
 }
@@ -4038,35 +4051,75 @@ function applyDeviceFilter() {
   });
 }
 
-function buildDeviceOptions(selectedLocation, selectedIp = "", searchText = "") {
-  let html = `<option value="">Selecionar nome/IP cadastrado...</option>`;
-  const search = normalizeSearch(searchText);
-  const usedKeys = allowSameDayDuplicates ? new Set() : monthlyUsedDeviceIps;
-  const selectedKey = deviceUsageKeyFromParts({ ip: selectedIp, location: selectedLocation });
-  const listedKeys = new Set();
-
-  getDevices()
+function sortedDevices() {
+  return getDevices()
     .slice()
     .sort((a, b) => {
       const areaCompare = String(a.area || "").localeCompare(String(b.area || ""), "pt-BR", { numeric: true, sensitivity: "base" });
       if (areaCompare) return areaCompare;
       return String(a.name || a.localOficial || a.ip || "").localeCompare(String(b.name || b.localOficial || b.ip || ""), "pt-BR", { numeric: true, sensitivity: "base" });
-    })
-    .forEach(device => {
+    });
+}
+
+function buildDeviceFilter(selectedLocation, selectedIp = "", searchText = "") {
+  const search = normalizeSearch(searchText);
+  const devices = sortedDevices();
+  const usedKeys = monthlyUsedDeviceIps;
+  const listedKeys = new Set();
+  const total = devices.length;
+  const used = devices.filter(device => {
+    const usageKey = deviceUsageKey(device);
+    return usageKey && usedKeys.has(usageKey);
+  }).length;
+  const remaining = Math.max(0, total - used);
+  const options = [];
+
+  devices.forEach(device => {
     const isSelected = device.ip === selectedIp || (!selectedIp && [device.name, device.localOficial].includes(selectedLocation));
     const usageKey = deviceUsageKey(device);
-    if (!isSelected && usageKey && usedKeys.has(usageKey)) return;
+    const isUsed = usageKey && usedKeys.has(usageKey);
+    if (!isSelected && !allowSameDayDuplicates && isUsed) return;
     if (!isSelected && usageKey && listedKeys.has(usageKey)) return;
 
     const optionText = normalizeSearch(`${device.name || ""} ${device.ip || ""} ${device.mac || ""} ${device.area || ""} ${device.modelo || ""} ${device.codigo || ""}`);
     if (search && !optionText.includes(search)) return;
 
+    if (usageKey) listedKeys.add(usageKey);
+    options.push({ device, isSelected, isUsed });
+  });
+
+  return { total, used, remaining, shown: options.length, options, search };
+}
+
+function buildDeviceOptions(filter) {
+  const label = allowSameDayDuplicates
+    ? `Selecionar equipamento (${filter.total} cadastrados, ${filter.used} usados no mês)...`
+    : `Selecionar equipamento (${filter.remaining} faltantes de ${filter.total})...`;
+  let html = `<option value="">${escapeHtml(label)}</option>`;
+
+  filter.options.forEach(({ device, isSelected, isUsed }) => {
     const status = device.statusRede ? ` | ${device.statusRede}` : "";
     const mac = device.mac ? ` | ${device.mac}` : "";
-    if (usageKey) listedKeys.add(usageKey);
-    html += `<option value="${escapeHtml(device.ip)}" data-name="${escapeHtml(device.name)}" ${isSelected ? "selected" : ""}>${escapeHtml(device.name)} - ${escapeHtml(device.ip)}${escapeHtml(status)}${escapeHtml(mac)}</option>`;
+    const usedLabel = allowSameDayDuplicates && isUsed ? " | usado no mês" : "";
+    html += `<option value="${escapeHtml(device.ip)}" data-name="${escapeHtml(device.name)}" ${isSelected ? "selected" : ""}>${escapeHtml(device.name)} - ${escapeHtml(device.ip)}${escapeHtml(status)}${escapeHtml(mac)}${escapeHtml(usedLabel)}</option>`;
   });
+
+  if (!filter.options.length) {
+    html += `<option value="" disabled>Nenhum equipamento encontrado</option>`;
+  }
+
   return html;
+}
+
+function updateDeviceFilterSummary(card, filter) {
+  const summary = card?.querySelector("[data-device-filter-summary]");
+  if (!summary) return;
+
+  const mode = allowSameDayDuplicates
+    ? `Mostrando todos os <strong>${filter.total}</strong> equipamentos. <strong>${filter.used}</strong> usados no mês.`
+    : `Faltam <strong>${filter.remaining}</strong> de <strong>${filter.total}</strong> equipamentos no mês. <strong>${filter.used}</strong> usados ocultos.`;
+  const search = filter.search ? ` Pesquisa: <strong>${filter.shown}</strong> resultado(s).` : "";
+  summary.innerHTML = mode + search;
 }
 
 function escapeHtml(value) {
@@ -4206,11 +4259,12 @@ function equipmentTemplate(data, index) {
       <div class="device-picker has-search no-show">
         <label>Selecionar:</label>
         <select data-device-select>
-          ${buildDeviceOptions(item.location, item.ip)}
+          ${buildDeviceOptions(buildDeviceFilter(item.location, item.ip))}
         </select>
         <button type="button" onclick="applyManual(this)">Manual</button>
         <button type="button" class="red" onclick="removeEquipment(this)">Remover</button>
         <input class="device-search" type="search" placeholder="Pesquisar equipamento por nome ou IP..." data-device-search>
+        <div class="device-filter-summary" data-device-filter-summary></div>
         <div class="device-details" data-device-details>
           ${deviceDetailsHtml(findDeviceByIp(item.ip))}
         </div>
@@ -4406,7 +4460,9 @@ function bindCardEvents() {
 
       const currentLocation = card?.querySelector('[data-field="location"]')?.textContent.trim() || "";
       const currentIp = card?.querySelector('[data-field="ip"]')?.textContent.trim() || "";
-      select.innerHTML = buildDeviceOptions(currentLocation, currentIp, input.value);
+      const filter = buildDeviceFilter(currentLocation, currentIp, input.value);
+      select.innerHTML = buildDeviceOptions(filter);
+      updateDeviceFilterSummary(card, filter);
       updateCardDeviceDetails(card);
     });
 
