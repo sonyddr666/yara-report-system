@@ -4628,27 +4628,22 @@ async function saveDirectReport(data) {
   const dayKey = data.dayKey || brToISO(data.header?.dataRelatorio) || currentDayKey;
   data.dayKey = dayKey;
   data.updatedAt = new Date().toISOString();
+
+  localStorage.setItem(storageKey(dayKey), JSON.stringify(data));
+
   let serverSaved = false;
 
   try {
     await apiSaveReport(data);
     serverSaved = true;
   } catch (serverError) {
-    console.warn("Servidor não salvou, usando armazenamento local:", serverError);
+    console.warn("Servidor não salvou, dado mantido no navegador:", serverError);
   }
 
   try {
     await saveToDatabase(data, dayKey);
   } catch (databaseError) {
     console.warn("Banco local indisponível:", databaseError);
-
-    try {
-      localStorage.setItem(storageKey(dayKey), JSON.stringify(data));
-      return { photosIncluded: true, serverSaved };
-    } catch (imageStorageError) {
-      localStorage.setItem(storageKey(dayKey), JSON.stringify(withoutImages(data)));
-      return { photosIncluded: false, serverSaved };
-    }
   }
 
   try {
@@ -4666,41 +4661,25 @@ async function saveReport(force = false) {
 
   const data = collectReportData();
 
-  try {
-    const result = await saveDirectReport(data);
-    reportDirty = false;
-    refreshNumbers();
-    showSaveStatus(result.photosIncluded ? "saved" : "save-error", result.photosIncluded ? "Salvo" : "Textos salvos");
-    await refreshMonthlyUsedDevices();
-    return true;
-  } catch (databaseError) {
-    console.error(databaseError);
-
-    try {
-      let photosIncluded = true;
-
-      try {
-        localStorage.setItem(storageKey(), JSON.stringify(data));
-      } catch (imageStorageError) {
-        photosIncluded = false;
-        localStorage.setItem(storageKey(), JSON.stringify(withoutImages(data)));
-      }
-
-      refreshNumbers();
-      reportDirty = false;
-      showSaveStatus(photosIncluded ? "saved" : "save-error", photosIncluded ? "Salvo" : "Textos salvos");
-      await refreshMonthlyUsedDevices();
-      return true;
-    } catch (storageError) {
-      console.error(storageError);
-      showSaveStatus("save-error", "Erro ao salvar");
-      alert("Não foi possível salvar este dia. Exporte um backup e libere espaço no navegador.");
-      return false;
-    }
-  }
+  const result = await saveDirectReport(data);
+  reportDirty = false;
+  refreshNumbers();
+  const serverMsg = result.serverSaved ? "Servidor" : "Navegador (servidor offline)";
+  showSaveStatus(result.photosIncluded ? "saved" : "save-error", `Salvo no ${serverMsg}`);
+  await refreshMonthlyUsedDevices();
+  return true;
 }
 
 async function getReportByDay(dayKey) {
+  const raw = localStorage.getItem(storageKey(dayKey));
+  if (raw) {
+    try {
+      return repairSavedText(JSON.parse(raw));
+    } catch (error) {
+      console.warn("Registro local corrompido:", error);
+    }
+  }
+
   try {
     const serverReport = await apiLoadReport(dayKey);
     if (serverReport) return repairSavedText(serverReport);
@@ -4715,15 +4694,7 @@ async function getReportByDay(dayKey) {
     console.warn("Banco local indisponível:", error);
   }
 
-  const raw = localStorage.getItem(storageKey(dayKey));
-  if (!raw) return null;
-
-  try {
-    return repairSavedText(JSON.parse(raw));
-  } catch (error) {
-    console.error(error);
-    return null;
-  }
+  return null;
 }
 
 async function getAllReports() {
