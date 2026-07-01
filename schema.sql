@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS equipments (
   UNIQUE(name, location, ip, serial)
 );
 
+CREATE INDEX IF NOT EXISTS idx_equipments_ip ON equipments(ip);
+
 CREATE TABLE IF NOT EXISTS reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   day_key TEXT NOT NULL UNIQUE,
@@ -47,6 +49,8 @@ CREATE TABLE IF NOT EXISTS images (
 CREATE INDEX IF NOT EXISTS idx_images_sha256 ON images(sha256);
 CREATE INDEX IF NOT EXISTS idx_images_day_key ON images(day_key);
 
+-- A base principal contém somente registros com IP.
+-- MD410 não recebe cadastro próprio: ele é apenas o tipo atendido em report_items.
 CREATE TABLE IF NOT EXISTS device_base (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ip TEXT NOT NULL UNIQUE,
@@ -61,6 +65,9 @@ CREATE TABLE IF NOT EXISTS report_items (
   report_id INTEGER NOT NULL,
   equipment_id INTEGER NOT NULL,
   position INTEGER NOT NULL DEFAULT 0,
+  entry_key TEXT NOT NULL DEFAULT '',
+  device_ip TEXT NOT NULL DEFAULT '',
+  attended_type TEXT NOT NULL DEFAULT '',
   title TEXT DEFAULT '',
   snapshot_json TEXT DEFAULT '{}',
   service TEXT DEFAULT '',
@@ -75,3 +82,5 @@ CREATE TABLE IF NOT EXISTS report_items (
   FOREIGN KEY(before_image_id) REFERENCES images(id),
   FOREIGN KEY(after_image_id) REFERENCES images(id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_report_items_report ON report_items(report_id);
