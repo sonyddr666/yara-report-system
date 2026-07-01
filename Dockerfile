@@ -4,9 +4,12 @@ WORKDIR /app
 
 COPY server.py .
 COPY server_core.py .
+COPY server_hardening.py .
 COPY schema.sql .
 COPY index.html .
+COPY logic-bootstrap.js .
 COPY logic-fixes.js .
+COPY sync-hardening.js .
 COPY tools/ tools/
 COPY entrypoint.sh .
 
