@@ -5,7 +5,6 @@ WORKDIR /app
 COPY server.py .
 COPY server_core.py .
 COPY server_hardening.py .
-COPY start_safe.py .
 COPY schema.sql .
 COPY index.html .
 COPY logic-bootstrap.js .
