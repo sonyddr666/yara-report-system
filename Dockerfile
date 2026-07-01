@@ -3,13 +3,14 @@ FROM python:3.13-slim
 WORKDIR /app
 
 COPY server.py .
+COPY server_core.py .
 COPY schema.sql .
 COPY index.html .
+COPY logic-fixes.js .
 COPY tools/ tools/
 COPY entrypoint.sh .
 
 RUN chmod +x entrypoint.sh
-
 RUN mkdir -p data/images db-stock data-stock
 
 COPY database.db /app/db-stock/database.db
