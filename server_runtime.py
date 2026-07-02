@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import sqlite3
 import threading
 from datetime import datetime
 from http.server import ThreadingHTTPServer
@@ -56,6 +58,115 @@ def repair_value(value):
     if isinstance(value, dict):
         return {key: repair_value(item) for key, item in value.items()}
     return value
+
+
+def migrate_legacy_equipments() -> None:
+    if not DB_PATH.exists():
+        return
+    conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute(
+            "SELECT sql FROM sqlite_master WHERE type='table' AND name='equipments'"
+        ).fetchone()
+        if not row:
+            return
+        normalized_sql = re.sub(r"\s+", "", str(row["sql"] or "").lower())
+        if "unique(name,location,ip,serial)" not in normalized_sql:
+            return
+
+        table_names = {
+            item["name"]
+            for item in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+        }
+        conn.execute("PRAGMA foreign_keys=OFF")
+        conn.execute("BEGIN IMMEDIATE")
+        conn.execute("DROP TABLE IF EXISTS equipments_clean")
+        conn.execute(
+            """
+            CREATE TABLE equipments_clean (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              name TEXT NOT NULL,
+              equipment_type TEXT DEFAULT '',
+              location TEXT DEFAULT '',
+              area TEXT DEFAULT '',
+              ip TEXT DEFAULT '',
+              mac TEXT DEFAULT '',
+              firmware TEXT DEFAULT '',
+              code TEXT DEFAULT '',
+              serial TEXT DEFAULT '',
+              notes TEXT DEFAULT '',
+              active INTEGER NOT NULL DEFAULT 1,
+              possui_md410 INTEGER NOT NULL DEFAULT 0,
+              base_model TEXT NOT NULL DEFAULT 'md400',
+              created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+
+        mapping: dict[int, int] = {}
+        by_ip: dict[str, int] = {}
+        rows = conn.execute("SELECT * FROM equipments ORDER BY id").fetchall()
+        for old in rows:
+            old_keys = set(old.keys())
+            old_id = int(old["id"])
+            ip_value = str(old["ip"] or "").strip() if "ip" in old_keys else ""
+            ip_key = ip_value.lower()
+            if ip_key and ip_key in by_ip:
+                mapping[old_id] = by_ip[ip_key]
+                continue
+
+            def value(name: str, default=""):
+                return old[name] if name in old_keys and old[name] is not None else default
+
+            cur = conn.execute(
+                """
+                INSERT INTO equipments_clean (
+                  name,equipment_type,location,area,ip,mac,firmware,code,serial,notes,
+                  active,possui_md410,base_model,created_at,updated_at
+                ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                """,
+                (
+                    str(value("name", "Equipamento")), str(value("equipment_type", "")),
+                    str(value("location", "")), str(value("area", "")), ip_value,
+                    str(value("mac", "")), str(value("firmware", "")), str(value("code", "")),
+                    str(value("serial", "")), str(value("notes", "")), int(value("active", 1)),
+                    int(value("possui_md410", 0)), str(value("base_model", "md400")),
+                    str(value("created_at", datetime.now().isoformat())),
+                    str(value("updated_at", datetime.now().isoformat())),
+                ),
+            )
+            new_id = int(cur.lastrowid)
+            mapping[old_id] = new_id
+            if ip_key:
+                by_ip[ip_key] = new_id
+
+        if "report_items" in table_names:
+            for old_id, new_id in mapping.items():
+                conn.execute(
+                    "UPDATE report_items SET equipment_id=? WHERE equipment_id=?",
+                    (new_id, old_id),
+                )
+        if "images" in table_names:
+            for old_id, new_id in mapping.items():
+                conn.execute(
+                    "UPDATE images SET equipment_id=? WHERE equipment_id=?",
+                    (new_id, old_id),
+                )
+
+        conn.execute("DROP TABLE equipments")
+        conn.execute("ALTER TABLE equipments_clean RENAME TO equipments")
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_equipments_ip_unique "
+            "ON equipments(lower(trim(ip))) WHERE trim(ip) <> ''"
+        )
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def runtime_upsert_equipment(conn, item: dict) -> int:
@@ -171,7 +282,11 @@ def apply_runtime_patches() -> None:
     final.restore_backup = transactional_restore
 
 
-init_db = base.init_db
+def init_db() -> None:
+    migrate_legacy_equipments()
+    base.init_db()
+
+
 save_devices = gated_save_devices
 load_devices = base.load_devices
 restore_payload = transactional_restore
@@ -181,7 +296,7 @@ Handler = final.Handler
 
 def main() -> None:
     apply_runtime_patches()
-    base.init_db()
+    init_db()
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", "8880"))
     server = ThreadingHTTPServer((host, port), Handler)
