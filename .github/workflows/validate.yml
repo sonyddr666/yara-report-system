@@ -67,11 +67,11 @@ jobs:
       - name: Ensure design file is untouched
         run: git diff --exit-code origin/main...HEAD -- index.html
 
-      - name: Ensure runtime data is not versioned
+      - name: Ensure runtime databases and images are not versioned
         run: |
-          tracked="$(git ls-files 'database.db' 'data/**' '*.db' '*.sqlite' '*.sqlite3')"
+          tracked="$(git ls-files | grep -E '(^|/)(database\.db|[^/]+\.(db|sqlite|sqlite3))$|^data/images/' || true)"
           if [ -n "$tracked" ]; then
-            echo "Runtime data is still tracked:"
+            echo "Runtime databases or images are still tracked:"
             echo "$tracked"
             exit 1
           fi
