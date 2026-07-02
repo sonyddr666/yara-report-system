@@ -53,6 +53,7 @@
     const file = input.files && input.files[0];
     if (!file) return;
     try {
+      await saveReport(true);
       const backup = JSON.parse(await file.text());
       if (!Array.isArray(backup.devices) || !Array.isArray(backup.reports)) {
         throw new Error("Backup inválido.");
