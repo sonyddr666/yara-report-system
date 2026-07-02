@@ -67,11 +67,17 @@ jobs:
       - name: Ensure design file is untouched
         run: git diff --exit-code origin/main...HEAD -- index.html
 
-      - name: Ensure runtime databases and images are not versioned
+      - name: Collect tracked runtime files
         run: |
-          tracked="$(git ls-files | grep -E '(^|/)(database\.db|[^/]+\.(db|sqlite|sqlite3))$|^data/images/' || true)"
-          if [ -n "$tracked" ]; then
-            echo "Runtime databases or images are still tracked:"
-            echo "$tracked"
-            exit 1
-          fi
+          git ls-files | grep -E '(^|/)(database\.db|[^/]+\.(db|sqlite|sqlite3))$|^data/images/' > tracked-runtime.txt || true
+          cat tracked-runtime.txt
+
+      - name: Upload tracked runtime list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracked-runtime
+          path: tracked-runtime.txt
+
+      - name: Ensure runtime databases and images are not versioned
+        run: test ! -s tracked-runtime.txt
