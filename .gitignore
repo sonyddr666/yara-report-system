@@ -1,3 +1,12 @@
+data/
+database.db
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.backup.json
+*.tmp
 __pycache__/
 *.py[cod]
-data/exports/
+.DS_Store
