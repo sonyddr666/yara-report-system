@@ -1,0 +1,77 @@
+name: Validate persistence build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - codex/persistencia-limpa
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate Python syntax
+        run: |
+          python -m py_compile \
+            server.py \
+            server_core.py \
+            server_hardening.py \
+            server_final.py \
+            server_runtime.py \
+            tools/import_old_reports.py \
+            tools/seed_devices_from_index.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check logic-bootstrap.js
+          node --check logic-fixes.js
+          node --check sync-hardening.js
+          node --check final-fixes.js
+
+      - name: Validate fresh SQLite schema
+        run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          schema = Path('schema.sql').read_text(encoding='utf-8')
+          with sqlite3.connect(':memory:') as conn:
+              conn.executescript(schema)
+              tables = {
+                  row[0]
+                  for row in conn.execute(
+                      "SELECT name FROM sqlite_master WHERE type='table'"
+                  )
+              }
+          required = {'equipments', 'device_base', 'reports', 'report_items', 'images'}
+          missing = required - tables
+          if missing:
+              raise SystemExit(f'Missing tables: {sorted(missing)}')
+          PY
+
+      - name: Ensure design file is untouched
+        run: git diff --exit-code origin/main...HEAD -- index.html
+
+      - name: Ensure runtime data is not versioned
+        run: |
+          tracked="$(git ls-files 'database.db' 'data/**' '*.db' '*.sqlite' '*.sqlite3')"
+          if [ -n "$tracked" ]; then
+            echo "Runtime data is still tracked:"
+            echo "$tracked"
+            exit 1
+          fi
