@@ -1,4 +1,4 @@
-from server_hardening import main
+from server_runtime import *
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

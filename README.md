@@ -1,73 +1,61 @@
 # YARA Report System
 
-Sistema de relatório fotográfico de manutenção preventiva. Backend Python + SQLite, frontend HTML puro.
+Sistema de relatório fotográfico com frontend HTML, backend Python e SQLite.
 
-## Primeiro deploy no Coolify
+O `index.html`, o CSS, o layout A4 e a impressão são preservados. Os dados reais ficam somente no storage persistente do servidor.
 
-### 1. Configurar Storage ANTES do deploy
+## Coolify
 
-**Obrigatório.** Se pular este passo, todos os dados (banco + imagens) serão perdidos no primeiro redeploy.
-
-No Coolify, dentro do serviço, vá em **Storages → + Add**:
-
-#### Volume Mount (recomendado)
-
-O Docker gerencia o volume, não precisa criar pasta no servidor:
+Antes do deploy, adicione em **Storages** um Volume Mount:
 
 | Campo | Valor |
 |---|---|
 | Name | `yara_data` |
 | Destination Path | `/app/data` |
 
-*(Source Path: deixar vazio)*
+Deixe o Source Path vazio. Como alternativa, use um Bind Mount apontando uma pasta permanente para `/app/data`.
 
-#### Bind Mount (alternativo)
+## Começar do zero
 
-Se quiser acessar os arquivos direto pelo servidor em `/data/yara`:
+1. Guarde qualquer backup que ainda seja necessário.
+2. Apague o serviço antigo.
+3. Apague também o volume/storage antigo.
+4. Crie o serviço novamente.
+5. Configure o storage em `/app/data` antes do primeiro deploy.
+6. Faça o deploy.
 
-| Campo | Valor |
-|---|---|
-| Name | `yara_data` |
-| Source Path | `/data/yara` |
-| Destination Path | `/app/data` |
+O sistema cria automaticamente:
 
-*(Antes do deploy, criar a pasta no servidor: `mkdir -p /data/yara/images && touch /data/yara/database.db && chmod -R 777 /data/yara`)*
-
-### 2. Fazer deploy
-
-Clicar **Deploy**. Na primeira subida o entrypoint detecta que o volume está vazio e copia automaticamente:
-
-- Banco de dados (`database.db`) com 72 equipamentos e relatórios
-- 77 imagens em `data/images/`
-
-### 3. Usar normalmente
-
-Salvar relatórios, adicionar equipamentos, etc.
-
-## Redeploy / Force Redeploy
-
-**Seguro** se o storage foi configurado no passo 1. O volume persiste entre deploys. O entrypoint detecta que já existe dado e não sobrescreve nada.
-
-## Estrutura
-
-```
-/app/
-├── server.py          # backend Python (porta 8880)
-├── schema.sql         # schema SQLite
-├── index.html         # frontend
-├── entrypoint.sh      # script de inicialização (seed automático)
-├── tools/             # scripts auxiliares
-└── data/              # volume persistente
-    ├── database.db    # banco SQLite
-    └── images/        # fotos dos relatórios
+```text
+/app/data/
+├── database.db
+├── images/
+└── snapshots/
 ```
 
-## Porta
+O repositório não contém mais banco preenchido, relatórios ou fotos reais. A lista padrão existente na página é enviada ao banco na primeira abertura; relatórios e fotos começam vazios.
 
-8880
+## Persistência
 
-## ATENÇÃO
+Com `/app/data` configurado como storage persistente, redeploy e reinício não apagam o banco nem as imagens. Remover o volume/storage é a ação que apaga os dados.
 
-- Sempre configure o Storage do Coolify antes do primeiro deploy.
-- Nunca use `docker compose down -v` no servidor (apaga o volume).
-- Force Redeploy no Coolify **não** apaga o volume se ele foi configurado via Storages.
+## Importação
+
+- **Mesclar** mantém dias que não existem no arquivo e atualiza apenas os dias importados.
+- **Substituir** cria um snapshot e troca a base pelo backup.
+- a importação é validada antes de ser confirmada;
+- placeholders como `[IMAGE_REMOVED]` não contam como fotos;
+- ocorrências repetidas são mantidas;
+- MD400 e MD410 podem usar o mesmo IP como atendimentos separados.
+
+## Contagem mensal
+
+A capa mensal usa apenas dados confirmados pelo servidor e mostra dias registrados, atendimentos e IPs únicos atendidos em relação à base cadastrada.
+
+## Rodar localmente
+
+```bash
+python server.py
+```
+
+Abra `http://127.0.0.1:8880`.

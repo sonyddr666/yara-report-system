@@ -1,0 +1,83 @@
+name: Validate persistence build
+
+on:
+  pull_request:
+  push:
+    branches:
+      - codex/persistencia-limpa
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate Python syntax
+        run: |
+          python -m py_compile \
+            server.py \
+            server_core.py \
+            server_hardening.py \
+            server_final.py \
+            server_runtime.py \
+            tools/import_old_reports.py \
+            tools/seed_devices_from_index.py
+
+      - name: Validate JavaScript syntax
+        run: |
+          node --check logic-bootstrap.js
+          node --check logic-fixes.js
+          node --check sync-hardening.js
+          node --check final-fixes.js
+
+      - name: Validate fresh SQLite schema
+        run: |
+          python - <<'PY'
+          import sqlite3
+          from pathlib import Path
+
+          schema = Path('schema.sql').read_text(encoding='utf-8')
+          with sqlite3.connect(':memory:') as conn:
+              conn.executescript(schema)
+              tables = {
+                  row[0]
+                  for row in conn.execute(
+                      "SELECT name FROM sqlite_master WHERE type='table'"
+                  )
+              }
+          required = {'equipments', 'device_base', 'reports', 'report_items', 'images'}
+          missing = required - tables
+          if missing:
+              raise SystemExit(f'Missing tables: {sorted(missing)}')
+          PY
+
+      - name: Ensure design file is untouched
+        run: git diff --exit-code origin/main...HEAD -- index.html
+
+      - name: Collect tracked runtime files
+        run: |
+          git ls-files | grep -E '(^|/)(database\.db|[^/]+\.(db|sqlite|sqlite3))$|^data/images/' > tracked-runtime.txt || true
+          cat tracked-runtime.txt
+
+      - name: Upload tracked runtime list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tracked-runtime
+          path: tracked-runtime.txt
+
+      - name: Ensure runtime databases and images are not versioned
+        run: test ! -s tracked-runtime.txt
