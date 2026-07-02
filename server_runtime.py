@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import threading
 from datetime import datetime
 from http.server import ThreadingHTTPServer
 from pathlib import Path
@@ -23,6 +24,10 @@ if hasattr(base, "SNAPSHOT_DIR"):
     base.SNAPSHOT_DIR = SNAPSHOT_DIR
 
 import server_final as final
+
+RESTORE_LOCK = getattr(base, "_RESTORE_LOCK", threading.RLock())
+ORIGINAL_SAVE_REPORT = base.save_report
+ORIGINAL_SAVE_DEVICES = base.save_devices
 
 
 def repair_text(value: str) -> str:
@@ -66,38 +71,99 @@ def runtime_upsert_equipment(conn, item: dict) -> int:
     return final.safe_upsert_equipment(conn, item)
 
 
+def gated_save_report(report: dict, mode: str = "replace") -> dict:
+    with RESTORE_LOCK:
+        return ORIGINAL_SAVE_REPORT(report, mode=mode)
+
+
+def gated_save_devices(devices, mode: str = "merge", expected_revision=None) -> dict:
+    with RESTORE_LOCK:
+        return ORIGINAL_SAVE_DEVICES(devices, mode=mode, expected_revision=expected_revision)
+
+
+def cleanup_orphans() -> None:
+    removable_paths: list[Path] = []
+    with base.connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT id,file_path FROM images
+            WHERE id NOT IN (
+              SELECT before_image_id FROM report_items WHERE before_image_id IS NOT NULL
+              UNION
+              SELECT after_image_id FROM report_items WHERE after_image_id IS NOT NULL
+            )
+            """
+        ).fetchall()
+        for row in rows:
+            relative = str(row["file_path"] or "")
+            target = (DATA_DIR / relative).resolve()
+            if relative and DATA_DIR in target.parents:
+                removable_paths.append(target)
+        conn.executemany("DELETE FROM images WHERE id=?", [(row["id"],) for row in rows])
+        conn.execute(
+            "DELETE FROM equipments WHERE id NOT IN (SELECT DISTINCT equipment_id FROM report_items)"
+        )
+        conn.commit()
+    for target in removable_paths:
+        try:
+            target.unlink(missing_ok=True)
+        except OSError:
+            pass
+
+
 def transactional_restore(backup: dict, mode: str = "merge") -> dict:
+    mode = "replace" if mode == "replace" else "merge"
     fixed, warnings = final.clean_backup(repair_value(backup))
     before = final.export_current()
     SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
     snapshot_path = SNAPSHOT_DIR / f"before-import-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.json"
     snapshot_path.write_text(json.dumps(before, ensure_ascii=False), encoding="utf-8")
 
-    try:
-        result = dict(final.ORIGINAL_RESTORE(fixed, mode=mode) or {})
-        errors = list(result.get("errors") or [])
-        if errors or result.get("ok") is False:
-            failed_days = ", ".join(str(item.get("dayKey") or "sem data") for item in errors[:10])
-            raise RuntimeError(f"Falha em {len(errors)} relatório(s): {failed_days}".rstrip(": "))
-    except Exception:
+    with RESTORE_LOCK:
         try:
-            final.ORIGINAL_RESTORE(before, mode="replace")
+            if mode == "replace":
+                with base.connect() as conn:
+                    conn.execute("DELETE FROM reports")
+                    conn.commit()
+            device_result = ORIGINAL_SAVE_DEVICES(fixed["devices"], mode=mode)
+            imported = []
+            errors = []
+            for report in fixed["reports"]:
+                try:
+                    imported.append(ORIGINAL_SAVE_REPORT(report, mode="replace"))
+                except Exception as error:
+                    errors.append({"dayKey": report.get("dayKey"), "error": str(error)})
+            if errors:
+                failed_days = ", ".join(str(item.get("dayKey") or "sem data") for item in errors[:10])
+                raise RuntimeError(f"Falha em {len(errors)} relatório(s): {failed_days}".rstrip(": "))
+            cleanup_orphans()
         except Exception:
-            pass
-        raise
+            try:
+                final.ORIGINAL_RESTORE(before, mode="replace")
+                cleanup_orphans()
+            except Exception:
+                pass
+            raise
 
-    device_result = result.get("devices") if isinstance(result.get("devices"), dict) else {}
-    result["ok"] = True
-    result["snapshot"] = str(snapshot_path.relative_to(DATA_DIR))
-    result["warnings"] = list(result.get("warnings") or []) + warnings
-    result["reportsImported"] = int(result.get("reportsImported") or len(fixed["reports"]))
-    result["devicesSaved"] = int(result.get("devicesSaved") or device_result.get("count") or len(fixed["devices"]))
-    return result
+    return {
+        "ok": True,
+        "mode": mode,
+        "snapshot": str(snapshot_path.relative_to(DATA_DIR)),
+        "devices": device_result,
+        "devicesSaved": int(device_result.get("count") or len(fixed["devices"])),
+        "reportsImported": len(imported),
+        "warnings": warnings,
+        "errors": [],
+    }
 
 
 def apply_runtime_patches() -> None:
     final.apply_patches()
     core.upsert_equipment = runtime_upsert_equipment
+    base.save_report = gated_save_report
+    base.save_devices = gated_save_devices
+    core.save_legacy_report = gated_save_report
+    core.save_devices = gated_save_devices
     base.restore_payload = transactional_restore
     if hasattr(base, "restore_backup"):
         base.restore_backup = transactional_restore
@@ -106,7 +172,7 @@ def apply_runtime_patches() -> None:
 
 
 init_db = base.init_db
-save_devices = base.save_devices
+save_devices = gated_save_devices
 load_devices = base.load_devices
 restore_payload = transactional_restore
 restore_backup = transactional_restore
