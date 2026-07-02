@@ -53,6 +53,19 @@ def repair_value(value):
     return value
 
 
+def runtime_upsert_equipment(conn, item: dict) -> int:
+    device_ip = str(item.get("ip") or "").strip().lower()
+    attended_type = str(item.get("attendedType") or item.get("equipmentType") or "").strip().upper()
+    if device_ip:
+        existing = conn.execute(
+            "SELECT id FROM equipments WHERE lower(trim(ip))=? ORDER BY id LIMIT 1",
+            (device_ip,),
+        ).fetchone()
+        if existing and "MD410" in attended_type:
+            return int(existing["id"])
+    return final.safe_upsert_equipment(conn, item)
+
+
 def transactional_restore(backup: dict, mode: str = "merge") -> dict:
     fixed, warnings = final.clean_backup(repair_value(backup))
     before = final.export_current()
@@ -84,6 +97,7 @@ def transactional_restore(backup: dict, mode: str = "merge") -> dict:
 
 def apply_runtime_patches() -> None:
     final.apply_patches()
+    core.upsert_equipment = runtime_upsert_equipment
     base.restore_payload = transactional_restore
     if hasattr(base, "restore_backup"):
         base.restore_backup = transactional_restore
